@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>SVG Fundamental</title>
+</head>
+<body>
+<h1>SVG Example 02</h1>
+<!-- red circle with black line -->
+<svg height="500" width="960">
+    <circle
+            cx="60"
+            cy="60"
+            fill="red"
+            r="50"
+            stroke="black"
+            stroke-width="2"
+    ></circle>
+    <line
+            stroke="black"
+            x1="0"
+            x2="120"
+            y1="0"
+            y2="120"
+    ></line>
+    <!-- d domain specific (for path) string
+    M - move
+    L - line
+    default fill = black
+    -->
+    <path
+            d="M 100,100 L 100,200 L 250,200"
+            fill="none"
+            stroke="green"
+    ></path>
+</svg>
+</body>
+</html>

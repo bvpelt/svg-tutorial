@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+        xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+        xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+        width="210mm"
+        height="297mm"
+        viewBox="0 0 210 297"
+        version="1.1"
+        id="svg5"
+        inkscape:version="1.1.2 (0a00cf5339, 2022-02-04)"
+        sodipodi:docname="drawing.svg"
+        xmlns="http://www.w3.org/2000/svg"
+>
+    <sodipodi:namedview
+            id="namedview7"
+            pagecolor="#ffffff"
+            bordercolor="#666666"
+            borderopacity="1.0"
+            inkscape:pageshadow="2"
+            inkscape:pageopacity="0.0"
+            inkscape:pagecheckerboard="0"
+            inkscape:document-units="mm"
+            showgrid="false"
+            inkscape:zoom="0.77771465"
+            inkscape:cx="397.31796"
+            inkscape:cy="561.25984"
+            inkscape:window-width="1920"
+            inkscape:window-height="2096"
+            inkscape:window-x="20"
+            inkscape:window-y="20"
+            inkscape:window-maximized="0"
+            inkscape:current-layer="layer1"/>
+    <defs
+            id="defs2"/>
+    <g
+            inkscape:label="Layer 1"
+            inkscape:groupmode="layer"
+            id="layer1">
+        <circle
+                style="fill:#ff0000;fill-rule:evenodd;stroke-width:0.264583"
+                id="path53"
+                cx="32.882389"
+                cy="246.48935"
+                r="11.078629"/>
+        <circle
+                style="fill:#ff0000;fill-rule:evenodd;stroke-width:0.264583"
+                id="path55"
+                cx="46.743797"
+                cy="205.14566"
+                r="6.1795263"/>
+        <circle
+                style="fill:#ff0000;fill-rule:evenodd;stroke-width:0.264583"
+                id="path57"
+                cx="74.998184"
+                cy="194.65111"
+                r="3.645256"/>
+        <circle
+                style="fill:#ff0000;fill-rule:evenodd;stroke-width:0.264583"
+                id="path59"
+                cx="90.966614"
+                cy="173.75101"
+                r="3.5575466"/>
+        <circle
+                style="fill:#ff0000;fill-rule:evenodd;stroke-width:0.264583"
+                id="path61"
+                cx="71.214058"
+                cy="234.1768"
+                r="9.2393885"/>
+    </g>
+</svg>

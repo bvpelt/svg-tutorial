@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>SVG Fundamental</title>
+    <link href="https://fonts.googleapis.com" rel="preconnect">
+    <link crossorigin href="https://fonts.gstatic.com" rel="preconnect"/>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech&display=swap" rel="stylesheet"/>
+    <style>
+        body {
+            margin: 0px;
+            overflow: hidden;
+        }
+
+        circle {
+            stroke: black;
+            fill: none;
+            stroke-width: 2px;
+        }
+
+        .bulls-eye {
+            fill: red;
+        }
+
+        .hit {
+            fill: black;
+        }
+
+        line {
+            stroke: black;
+            stroke-width: 2px;
+        }
+    </style>
+</head>
+<body>
+<h1>SVG Example 13</h1>
+<p>Example bullseye</p>
+<svg height="500" width="960">
+    <circle cx="400" cy="250" r="150"></circle>
+    <circle cx="400" cy="250" r="125"></circle>
+    <circle cx="400" cy="250" r="100"></circle>
+    <circle cx="400" cy="250" r="75"></circle>
+    <circle cx="400" cy="250" r="50"></circle>
+    <circle class="bulls-eye" cx="400" cy="250" r="25"></circle>
+    <circle cx="400" cy="250" r="5"></circle>
+    <line x1="400" x2="400" y1="400" y2="100"></line>
+    <line x1="250" x2="550" y1="250" y2="250"></line>
+
+    <circle class="hit" cx="275" cy="225" id="hit1" r="5">
+        <animate
+                attributeName="fill"
+                dur="5s"
+                repeatCount="indefinite"
+                values="black;red;green;blue;white"/>
+    </circle>
+
+    <circle class="hit" cx="340" cy="345" id="hit2" r="5">
+        <animate
+                attributeName="fill"
+                dur="7s"
+                repeatCount="indefinite"
+                values="black;red;green;blue;white"/>
+    </circle>
+
+    <circle class="hit" cx="440" cy="145" id="hit3" r="5">
+    <animate
+            attributeName="fill"
+            dur="9s"
+            repeatCount="indefinite"
+            values="black;red;green;blue;white"/>
+    </circle>
+
+    <circle class="hit" cx="380" cy="115" id="hit4" r="5">
+        <animate
+                attributeName="fill"
+                dur="11s"
+                repeatCount="indefinite"
+                values="black;red;green;blue;white"/>
+    </circle>
+
+    <circle class="hit" cx="460" cy="325" id="hit5" r="5">
+        <animate
+                attributeName="fill"
+                dur="13s"
+                repeatCount="indefinite"
+                values="black;red;green;blue;white"/>
+    </circle>
+</svg>
+</body>
+</html>

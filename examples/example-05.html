@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>SVG Fundamental</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+
+        rect {
+            stroke: black;
+            fill: red;
+            stroke-width: 20px;
+            transition: all 3000ms
+        }
+
+        rect:hover {
+            fill: green;
+            stroke-width: 100px;
+        }
+    </style>
+</head>
+<body>
+<h1>SVG Example</h1>
+<!-- red circle with black line -->
+<svg height="500" width="960">
+    <text class="Label" stroke="black" x="25" y="20">SVG example animation</text>
+    <rect height="250" width="500" x="250" y="100"></rect>
+</svg>
+</body>
+</html>

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>SVG Fundamental</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+<svg height="500" width="960">
+    <!-- gradients -->
+    <defs>
+        <radialGradient
+                cx="50%"
+                cy="50%"
+                id="sky-gradient"
+                r="75%"
+        >
+            <stop
+                    offset="0%"
+                    stop-color="aliceblue"
+            >
+                <animate
+                        attributeName="stop-color"
+                        dur="15s"
+                        repeatCount="indefinite"
+                        values="aliceblue; indigo; aliceblue"
+                ></animate>
+            </stop>
+            <stop
+                    offset="100%"
+                    stop-color="steelblue"
+            ></stop>
+        </radialGradient>
+        <linearGradient
+                id="land1-gradient"
+                x1="0%"
+                x2="0%"
+                y1="0%"
+                y2="100%"
+        >
+            <stop
+                    offset="0%"
+                    stop-color="aliceblue"
+            >
+                <animate
+                        attributeName="stop-color"
+                        dur="15s"
+                        repeatCount="indefinite"
+                        values="aliceblue; steelblue; aliceblue"
+                ></animate>
+            </stop>
+            <stop
+                    offset="100%"
+                    stop-color="midnightblue"
+            ></stop>
+        </linearGradient>
+        <linearGradient
+                id="land2-gradient"
+                x1="50%"
+                x2="100%"
+                y1="20%"
+                y2="100%"
+        >
+            <stop
+                    offset="0%"
+                    stop-color="aliceblue"
+            >
+                <animate
+                        attributeName="stop-color"
+                        dur="15s"
+                        repeatCount="indefinite"
+                        values="aliceblue; steelblue; aliceblue"
+                ></animate>
+            </stop>
+            <stop
+                    offset="100%"
+                    stop-color="midnightblue"
+            ></stop>
+        </linearGradient>
+    </defs>
+    <rect
+            fill="url(#sky-gradient)"
+            height="500"
+            width="960"
+            x="0"
+            y="0"
+    ></rect>
+    <!-- sun -->
+    <circle cx="480" cy="250" r="100">
+        <animate
+                attributeName="cy"
+                dur="15s"
+                repeatCount="indefinite"
+                values="250px; 350px; 250px"
+        />
+    </circle>
+    <!-- landscape 1 -->
+    <path
+            d="M 0 300 Q 250 100 960 400 L 960 500 L 0 500 Z"
+            fill="url(#land1-gradient)"
+    ></path>
+    <!-- landscape 2 -->
+    <path
+            d="M 0 375 C 400 375 500 150 960 250 L960 500 L 0 500 "
+            fill="url(#land2-gradient)"
+    ></path>
+</svg>
+</body>
+</html>
