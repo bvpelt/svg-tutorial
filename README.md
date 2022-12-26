@@ -5,7 +5,9 @@ See https://vizhub.com
 
 # Intro
 see https://www.youtube.com/watch?v=xkBheRZTkaw
-2:25:44
+4:16
+
+3:44 - package nodejs and d3
 
 # Tools
 - vizhub https://vizhub.com/
@@ -16,6 +18,7 @@ see https://www.youtube.com/watch?v=xkBheRZTkaw
     - https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/d
 - svg path specification https://svgwg.org/svg2-draft/paths.html#PathElement
 - fonts https://fonts.google.com/?query=share+tech
+- finding last version of npm package bij going to https://unpkg.com/<packagename>. unpkg.com is a content delivery platform
 
 # Learning points
 - svg has 0,0 at left top (0,0) and right bottom (maxx, maxy)

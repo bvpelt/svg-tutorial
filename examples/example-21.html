@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>SVG Fundamental - Sol Lewitt</title>
+    <title>SVG Fundamental - Example 21</title>
     <style>
         body {
             margin: 0;
@@ -13,16 +13,23 @@
 </head>
 <body>
 <script>
-    const svg = document.createElementNS(
-        'http://www.w3.org/2000/svg',
-        'svg'
-    );
+
     const width = window.innerWidth;
     const height = window.innerHeight;
 
-    svg.setAttribute('width', width);
-    svg.setAttribute('height', height);
-    document.body.appendChild(svg);
+    function createAnimateRadius() {
+        const animateColor = document.createElementNS(  // const is block scoped, no reassignments
+            'http://www.w3.org/2000/svg',
+            'animate'
+        );
+        animateColor.setAttribute('attributeName', 'r');
+        animateColor.setAttribute('begin', '0s');
+        animateColor.setAttribute('dur', '15s');
+        animateColor.setAttribute('repeatCount', 'indefinite');
+        animateColor.setAttribute('from', '0%');
+        animateColor.setAttribute('to', '30%');
+        return animateColor;
+    }
 
     function createCircle(circleColor, w, h) {
         const circle = document.createElementNS(  // const is block scoped, no reassignments
@@ -31,9 +38,9 @@
         );
         circle.setAttribute('cx', w / 2);
         circle.setAttribute('cy', h / 2);
-        circle.setAttribute('r', w/3.5);
+        circle.setAttribute('r', "45%");
         circle.setAttribute('fill', circleColor);
-
+        circle.appendChild(createAnimateRadius());
         return circle;
     }
 
@@ -85,10 +92,6 @@
         return animateColor;
     }
 
-    svg.appendChild(createMask('circle-mask', 'black', createCircle('white', width, height), width, height));
-    svg.appendChild(createMask('circle-mask-2', 'white', createCircle('black', width, height), width, height));
-
-
     function createGroup() {
         // group horizontal lines
         const group = document.createElementNS(  // const is block scoped, no reassignments
@@ -117,9 +120,23 @@
         return rect
     }
 
+    // Add svg element in DOM tree
+    const svg = document.createElementNS(
+        'http://www.w3.org/2000/svg',
+        'svg'
+    );
+    svg.setAttribute('width', width);
+    svg.setAttribute('height', height);
+    document.body.appendChild(svg);
+
+    // Create masks
+    svg.appendChild(createMask('circle-mask', 'black', createCircle('white', width, height), width, height));
+    svg.appendChild(createMask('circle-mask-2', 'white', createCircle('black', width, height), width, height));
+
+    // Create group for transformations
     const group = createGroup();
 
-    // vertical lines
+    // Create vertical lines
     const nv = height / 20;
     for (let i = 0; i < nv; i++) {
         rect = createRect(width, 10, null, i * 20, 'url(#circle-mask)');
@@ -128,7 +145,7 @@
     }
     svg.appendChild(group);
 
-    // horizontal lines
+    // Create horizontal lines
     const nh = width / 20;
     for (let i = 0; i < nh; i++) {
         rect = createRect(10, height, i * 20, null, 'url(#circle-mask-2)');
