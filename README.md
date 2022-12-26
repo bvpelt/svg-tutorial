@@ -5,10 +5,12 @@ See https://vizhub.com
 
 # Intro
 see https://www.youtube.com/watch?v=xkBheRZTkaw
+2:25:44
 
 # Tools
 - vizhub https://vizhub.com/
 - svg https://developer.mozilla.org/en-US/docs/Web/SVG
+- figma https://www.figma.com/ - draw svg figures online
 - svg path
     - https://developer.mozilla.org/en-US/docs/Web/SVG/Element/path
     - https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/d

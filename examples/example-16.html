@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>SVG Fundamental - Example 16</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+
+
+    </style>
+</head>
+<body>
+<script>
+    const svg = document.createElementNS(
+        'http://www.w3.org/2000/svg',
+        'svg'
+    );
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+
+    svg.setAttribute('width', width);
+    svg.setAttribute('height', height);
+    document.body.appendChild(svg);
+
+    const n = width/20;
+    for (let i = 0; i < n; i++) {
+        const rect = document.createElementNS(  // const is block scoped, no reassignments
+            'http://www.w3.org/2000/svg',
+            'rect'
+        );
+        rect.setAttribute('width', 10);
+        rect.setAttribute('x', i*20);
+        rect.setAttribute('height', height);
+        svg.appendChild(rect);
+    }
+
+</script>
+</body>
+</html>

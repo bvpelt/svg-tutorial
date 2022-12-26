@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>SVG Fundamental</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+
+    </style>
+</head>
+<body>
+<h1>SVG Example 15</h1>
+<p>Javascript Example </p>
+<svg height="600" width="960">
+    <script>
+        //console.log("Hello World");
+        //console.log(5);
+        //console.log(5+5);
+        //console.log(2 + 3*5);
+        //console.log((2 + 3)*5);
+
+        //const num = 5;
+        //num = 10; // This breaks
+        //console.log(num);
+
+        //let num = 5;
+        //num = 10;
+        //console.log(num);
+
+        //var num = 5; // Older form behaves like let
+        //num = 10;
+        //console.log(num);
+
+        //const object = {
+        //    num: 5
+        //}
+        //object.num = 10;    // works - with variable num this doesnot work!!!
+        //console.log(object.num);
+
+        //const object = {
+        //
+        //}
+        //object.num = 10;    // object must exist, properties do not need to exist
+        //console.log(object.num);
+
+        //for (let i = 0; i < 5; i++) {
+        //    console.log(i);
+        //}
+
+        //const add = (a,b) => a+b;  // ES6 javascript syntax - immplicit return
+        //function add(a,b) {
+        //    return a+b;
+        //}
+
+        //const add = (a,b) => { // explicit return
+        //    return a+b;
+        //}
+        //console.log(add(5,10));
+
+        //const personExample = {
+        //    firstName: 'Jane',
+        //    lastName: 'Doe'
+        //};
+        //console.log(personExample);
+        //console.log(personExample.firstName);
+        //console.log(personExample.lastName)
+
+        //function createPerson(first, last) {
+        //    return {
+        //        first: first,
+        //        last: last
+        //    }
+        // }
+        //console.log(createPerson('Jane', 'Doe'));
+
+        //const createPerson = (first, last) => {
+        //    return {                                 // return needed after { because { starts object
+        //        first: first,
+        //        last: last
+        //    }
+        //}
+        //console.log(createPerson('Jane', 'Doe'));
+
+        //const createPerson = (first, last) => ({  // Alternative
+        //    first: first,
+        //    last: last
+        //});
+        //console.log(createPerson('Jane', 'Doe'));
+
+        const createPerson = (first, last) => ({first, last}); // Alternative short form
+        console.log(createPerson('Jane', 'Doe'));
+    </script>
+</svg>
+</body>
+</html>

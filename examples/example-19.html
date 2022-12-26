@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>SVG Fundamental Example 18</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+
+
+    </style>
+</head>
+<body>
+<script>
+    const svg = document.createElementNS(
+        'http://www.w3.org/2000/svg',
+        'svg'
+    );
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+
+    svg.setAttribute('width', width);
+    svg.setAttribute('height', height);
+    document.body.appendChild(svg);
+
+    // mask
+    const mask = document.createElementNS(  // const is block scoped, no reassignments
+        'http://www.w3.org/2000/svg',
+        'mask'
+    );
+    mask.setAttribute('id', 'circle-mask');
+    svg.appendChild(mask);
+
+    const maskRect = document.createElementNS(  // const is block scoped, no reassignments
+        'http://www.w3.org/2000/svg',
+        'rect'
+    );
+    maskRect.setAttribute('width', width);
+    maskRect.setAttribute('height', height);
+    maskRect.setAttribute('fill', 'black');
+    mask.appendChild(maskRect);
+
+    const circle = document.createElementNS(  // const is block scoped, no reassignments
+        'http://www.w3.org/2000/svg',
+        'circle'
+    );
+    circle.setAttribute('cx', width/2);
+    circle.setAttribute('cy', height/2);
+    circle.setAttribute('r', 200);
+    circle.setAttribute('fill', 'white');
+    mask.appendChild(circle);
+
+    // mask2
+    const mask2 = document.createElementNS(  // const is block scoped, no reassignments
+        'http://www.w3.org/2000/svg',
+        'mask'
+    );
+    mask2.setAttribute('id', 'circle-mask-2');
+    svg.appendChild(mask2);
+
+    const maskRect2 = document.createElementNS(  // const is block scoped, no reassignments
+        'http://www.w3.org/2000/svg',
+        'rect'
+    );
+    maskRect2.setAttribute('width', width);
+    maskRect2.setAttribute('height', height);
+    maskRect2.setAttribute('fill', 'white');
+    mask2.appendChild(maskRect2);
+
+    const circle2 = document.createElementNS(  // const is block scoped, no reassignments
+        'http://www.w3.org/2000/svg',
+        'circle'
+    );
+    circle2.setAttribute('cx', width/2);
+    circle2.setAttribute('cy', height/2);
+    circle2.setAttribute('r', 200);
+    circle2.setAttribute('fill', 'black');
+    mask2.appendChild(circle2);
+
+    const animateTransform = document.createElementNS(  // const is block scoped, no reassignments
+        'http://www.w3.org/2000/svg',
+        'animateTransform'
+    );
+    animateTransform.setAttribute('attributeName', 'transform');
+    animateTransform.setAttribute('attributeType','XML');
+    animateTransform.setAttribute('type', 'rotate');
+    animateTransform.setAttribute('from', 0);
+    animateTransform.setAttribute('to', 360);
+    animateTransform.setAttribute('dur', '60s');
+    animateTransform.setAttribute('repeatCount', 'indefinite');
+    
+    // group horizontal lines
+    const group = document.createElementNS(  // const is block scoped, no reassignments
+        'http://www.w3.org/2000/svg',
+        'g'
+    );
+    group.setAttribute('transform-origin', 'center');
+    group.appendChild(animateTransform);
+    svg.appendChild(group);
+
+
+    // vertical lines
+    const nv = height/20;
+    for (let i = 0; i < nv; i++) {
+
+        const animateColor = document.createElementNS(  // const is block scoped, no reassignments
+            'http://www.w3.org/2000/svg',
+            'animate'
+        );
+        animateColor.setAttribute('attributeName', 'fill');
+        animateColor.setAttribute('values', 'black; white; white; black');
+        animateColor.setAttribute('dur', '60s');
+        animateColor.setAttribute('repeatCount', 'indefinite');
+
+        const rect = document.createElementNS(  // const is block scoped, no reassignments
+            'http://www.w3.org/2000/svg',
+            'rect'
+        );
+        rect.setAttribute('width', width);
+        rect.setAttribute('y', i*20);
+        rect.setAttribute('height', 10);
+        rect.setAttribute('mask', 'url(#circle-mask)');
+        rect.appendChild(animateColor);
+        group.appendChild(rect);
+    }
+
+
+    // horizontal lines
+    const nh = width/20;
+    for (let i = 0; i < nh; i++) {
+        const rect = document.createElementNS(  // const is block scoped, no reassignments
+            'http://www.w3.org/2000/svg',
+            'rect'
+        );
+        rect.setAttribute('width', 10);
+        rect.setAttribute('x', i*20);
+        rect.setAttribute('height', height);
+        rect.setAttribute('mask', 'url(#circle-mask-2)')
+        svg.appendChild(rect);
+    }
+
+
+</script>
+</body>
+</html>

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>SVG Fundamental</title>
+    <link href="https://fonts.googleapis.com" rel="preconnect">
+    <link crossorigin href="https://fonts.gstatic.com" rel="preconnect"/>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech&display=swap" rel="stylesheet"/>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+
+        line {
+            stroke: black;
+            stroke-width: 2px;
+        }
+
+        rect {
+            fill: #9CD7DEFF;
+            stroke: black;
+            stroke-width: 2px;
+        }
+
+        text {
+            stroke: black;
+            fill: blue;
+            font-size: 10px;
+        }
+
+        .version-01 {
+            fill: bisque;
+        }
+
+        .version-02 {
+            fill: #fcc496;
+        }
+
+        .version-03 {
+            fill: #faae77;
+        }
+
+        .version-04 {
+            fill: #fa9c5e;
+        }
+    </style>
+</head>
+<body>
+<h1>SVG Example 14</h1>
+<p>Example timesequence</p>
+<svg height="600" width="960">
+    <!-- x and y axis -->
+    <line Y2="400" x1="100" x2="500" y1="400"></line>
+    <line Y2="10" x1="100" x2="100" y1="400"></line>
+
+    <!-- t1=09:00 -->
+    <rect class="version-01" height="400" width="50" x="100" y="0"></rect>
+
+    <!-- t1=10:00 -->
+    <rect class="version-01" height="200" width="350" x="150" y="200"></rect>
+    <rect class="version-02" height="200" width="50" x="150" y="0"></rect>
+
+    <!-- t1=11:00 -->
+    <rect class="version-02" height="100" width="300" x="200" y="100"></rect>
+    <rect class="version-03" height="100" width="50" x="200" y="0"></rect>
+
+    <!-- t1=12:00 -->
+    <rect class="version-03" height="50" width="250" x="250" y="50"></rect>
+    <rect class="version-04" height="50" width="250" x="250" y="0"></rect>
+
+    <!-- borders for time sequences registration / validity -->
+    <line Y2="0" style="stroke: #9CD7DEFF" x1="500" x2="500" y1="400"></line>
+    <line Y2="0" style="stroke: #9CD7DEFF" x1="100" x2="500" y1="0"></line>
+
+    <!-- registration time x-axis -->
+    <g>
+        <text x="90" y="420">09:00</text>
+        <text x="140" y="420">10:00</text>
+        <text x="180" y="420">11:00</text>
+        <text x="220" y="420">12:00</text>
+        <text x="490" y="420">now</text>
+        <text x="220" y="440">registration time</text>
+        <g>
+            <line x1="300" x2="360" y1="437" y2="437"></line>
+            <line x1="350" x2="360" y1="430" y2="437"></line>
+            <line x1="350" x2="360" y1="444" y2="437"></line>
+        </g>
+    </g>
+
+    <!-- validity time y-axis -->
+    <g>
+        <text x="70" y="403">09:05</text>
+        <text x="70" y="203">10:05</text>
+        <text x="70" y="103">11:05</text>
+        <text x="70" y="53">12:05</text>
+        <text x="70" y="8">now</text>
+        <text transform="translate(50,250) rotate(-90)">validity time</text>
+
+        <g>
+            <line x1="50" x2="50" y1="180" y2="80"></line>
+            <line x1="57" x2="50" y1="90" y2="80"></line>
+            <line x1="43" x2="50" y1="90" y2="80"></line>
+        </g>
+    </g>
+
+    <!-- labels -->
+    <g>
+        <g>
+            <rect class="version-01" height="20" width="20" x="550" y="50"></rect>
+            <text x="580" y="63">version 1 from registration 09:00, validity 09:05</text>
+        </g>
+        <g>
+            <rect class="version-02" height="20" width="20" x="550" y="80"></rect>
+            <text x="580" y="93">version 2 from registration 10:00, validity 10:05</text>
+        </g>
+        <g>
+            <rect class="version-03" height="20" width="20" x="550" y="110"></rect>
+            <text x="580" y="123">version 3 from registraton 11:00, validity 11:05</text>
+        </g>
+        <g>
+            <rect class="version-04" height="20" width="20" x="550" y="140"></rect>
+            <text x="580" y="153">version 4 - last known</text>
+        </g>
+    </g>
+</svg>
+</body>
+</html>
