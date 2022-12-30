@@ -45,14 +45,7 @@ const renderMask = (selection, id, inverted) => {
     .attr('width', width)
     .attr('height', height)
     .attr('fill', inverted ? 'black' : 'white');
-
-//  const g = mask
-//    .append('g')
-//    .attr(
-//      'transform',
-//      `translate(${width / 2},${height / 2})`
-//    );
-  
+ 
   mask.selectAll('g')
     .data(range(symbols.length))
   	.join((enter) => 
@@ -63,33 +56,9 @@ const renderMask = (selection, id, inverted) => {
   				.attr('d', (d) => symbol(symbols[d], 8000)())
   				.attr('fill', inverted ? 'white' : 'black')
   );
-  
-
-  //    .append('path')
-  //    .attr('d', symbol(symbols[1], 100000)())
-  //    .attr('fill', inverted ? 'black' : 'white');
 };
-
-//renderMask(svg, 'mask-1', false);
-//renderMask(svg, 'mask-2', true);
 
 svg
   .call(renderMask, 'mask-1', false)
   .call(renderMask, 'mask-2', true);
 
-//const mask2 = svg
-//  .append('mask')
-//  .attr('id', 'mask-2');
-//
-//mask2
-//  .append('rect')
-//  .attr('width', width)
-//  .attr('height', height)
-//  .attr('fill', 'white');
-//
-//mask2
-//  .append('g')
-//	.attr('transform', `translate(${width/2},${height/2})`)
-//  .append('path')
-//  .attr('d', symbol(symbols[1], 100000)())
-//  .attr('fill', 'black');

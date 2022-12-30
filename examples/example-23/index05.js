@@ -38,36 +38,23 @@ svg
 const renderMask = (selection, id, inverted) => {
   const mask = selection
     .append('mask')
-    .attr('id', id); 
+    .attr('id', id);
 
   mask
     .append('rect')
     .attr('width', width)
     .attr('height', height)
+    .attr('fill', inverted ? 'white' : 'black');
+
+  mask
+    .append('g')
+    .attr(
+      'transform',
+      `translate(${width / 2},${height / 2})`
+    )
+    .append('path')
+    .attr('d', symbol(symbols[1], 100000)())
     .attr('fill', inverted ? 'black' : 'white');
-
-//  const g = mask
-//    .append('g')
-//    .attr(
-//      'transform',
-//      `translate(${width / 2},${height / 2})`
-//    );
-  
-  mask.selectAll('g')
-    .data(range(symbols.length))
-  	.join((enter) => 
-          enter
-          .append('g')
-          .attr('transform', (d) => `translate(${d*125 + 100},${height/2})`)
-          .append('path')
-  				.attr('d', (d) => symbol(symbols[d], 8000)())
-  				.attr('fill', inverted ? 'white' : 'black')
-  );
-  
-
-  //    .append('path')
-  //    .attr('d', symbol(symbols[1], 100000)())
-  //    .attr('fill', inverted ? 'black' : 'white');
 };
 
 //renderMask(svg, 'mask-1', false);
