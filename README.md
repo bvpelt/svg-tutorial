@@ -5,7 +5,7 @@ See https://vizhub.com
 
 # Intro
 see https://www.youtube.com/watch?v=xkBheRZTkaw
-4:16
+4:58
 
 3:44 - package nodejs and d3
 
