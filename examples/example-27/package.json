@@ -1,9 +1,10 @@
 {
   "scripts": {
-    "build": "rollup -c"
+    "build": "rollup --bundleConfigAsCjs -c",
+    "start": "http-server"
   },
   "devDependencies": {
-    "rollup": "latest",
-    "@rollup/plugin-buble": "latest"
+    "http-server": "^14.1.1",
+    "rollup": "latest"
   }
 }
