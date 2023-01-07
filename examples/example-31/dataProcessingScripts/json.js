@@ -1,7 +1,9 @@
 let fs = require("fs")
 let {exec} = require("child_process")
 const depends = require("./depends"); 
-console.log("dependencies", depends)
+
+
+const json = () => {
 // clone each repo
 //let repo = "d3"
 depends.forEach(repo => {
@@ -18,5 +20,9 @@ depends.forEach(repo => {
     };
   })
   fs.writeFileSync(`data/${repo}.001.json`, JSON.stringify(commits))
-})
+});
+
+}
+
+module.exports = json;
 
