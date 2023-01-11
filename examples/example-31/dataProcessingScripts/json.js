@@ -1,28 +1,22 @@
-let fs = require("fs")
-let {exec} = require("child_process")
-const depends = require("./depends"); 
+const fs = require('fs');
+const { exec } = require('child_process');
 
-
-const json = () => {
-// clone each repo
-//let repo = "d3"
-depends.forEach(repo => {
-  let txt = fs.readFileSync(`data/${repo}.001.🔪sv`).toString()
-  lines = txt.split("☕")
-  commits = lines.slice(1).map(line => {
-    let l = line.split("🔪");
-    return {
-      //hash: l[0],
-      date: l[1],
-      author: l[2],
-      //subject: l[3],
-      //body: l[4]
-    };
-  })
-  fs.writeFileSync(`data/${repo}.001.json`, JSON.stringify(commits))
-});
-
-}
+const json = (repositories) => {
+  repositories.forEach(({ name }) => {
+    const txt = fs.readFileSync(`data/${name}.🔪sv`).toString();
+    const lines = txt.split('☕');
+    const commits = lines.slice(1).map((line) => {
+      const l = line.split('🔪');
+      return {
+        //hash: l[0],
+        date: l[1],
+        author: l[2],
+        //subject: l[3],
+        //body: l[4]
+      };
+    });
+    fs.writeFileSync(`data/${name}.json`, JSON.stringify(commits));
+  });
+};
 
 module.exports = json;
-

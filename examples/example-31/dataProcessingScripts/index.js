@@ -1,22 +1,27 @@
-const { json } = require('stream/consumers');
 const clone = require('./clone');
 const knife = require('./knife');
-const jsons = require('./json');
+const json = require('./json');
 const combine = require('./combine');
-
+const aggregate = require('./aggregate');
+//const repositories = require('./repositories');
+const repositories = require('./stamenRepositories');
 
 // Clone the repositories
-console.log('Cloning')
-clone();
+console.log('Cloning...');
+clone(repositories);
 
-// Convert to kniveSV file
-console.log('Converting to kniveSV')
-knife();
+// Convert to kniveSV files
+console.log('Knifing...');
+knife(repositories);
 
 // Convert to JSON files
-console.log('Converting to JSON')
-jsons();
+console.log('Converting to JSON...');
+json(repositories);
 
-// Combine the output files
-console.log('Combining output files')
-combine();
+// Combine the output file
+console.log('Combining the output file...');
+combine(repositories);
+
+// Aggregate by week
+console.log('Aggregating...');
+aggregate();

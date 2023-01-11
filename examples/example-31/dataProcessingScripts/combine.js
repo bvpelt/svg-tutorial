@@ -1,20 +1,17 @@
-const fs = require("fs")
-const { exec } = require("child_process")
-const depends = require("./depends");
+const fs = require('fs');
+const { exec } = require('child_process');
 
-const combine = () => {
-  // clone each repo
-  //let repo = "d3"
-  const commits = []
-  depends.forEach(repo => {
-    const txt = fs.readFileSync(`data/${repo}.001.json`).toString()
-    const json = JSON.parse(txt)
-    json.forEach(c => {
-      c.repo = repo
-      commits.push(c)
-    })
-  })
-  fs.writeFileSync(`all-d3-commits.json`, JSON.stringify(commits));
-}
+const combine = (repositories) => {
+  const commits = [];
+  repositories.forEach(({ name }) => {
+    const txt = fs.readFileSync(`data/${name}.json`).toString();
+    const json = JSON.parse(txt);
+    json.forEach((c) => {
+      c.repository = name;
+      commits.push(c);
+    });
+  });
+  fs.writeFileSync('data/all-commits.json', JSON.stringify(commits));
+};
 
 module.exports = combine;

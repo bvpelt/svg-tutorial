@@ -1,30 +1,22 @@
-const fs = require("fs")
-const { exec } = require("child_process")
-const depends = require("./depends");
+const fs = require('fs');
+const { exec } = require('child_process');
 
-const clone = () => {
-  exec('mkdir repositories', (error, stdout, stderr) => {
-   
-  });
+const clone = (repositories) => {
 
-  // clone each repo
-  depends.forEach(repo => {
-    let command = `git clone https://github.com/d3/${repo}.git`
+  exec('mkdir repositories');
+  
+  repositories.forEach(({ name, org }) => {
+    let command = `git clone https://github.com/${org}/${name}.git`;
     console.log(command);
     exec(command, { cwd: './repositories' }, (error, stdout, stderr) => {
-      if (error) {
-        //console.log(error);
+      let command2 = `git pull https://github.com/${org}/${name}.git`;
 
-        let command = `git pull`
-        console.log(command + ' for repo: ' + repo);
-        exec(command, { cwd: './repositories/' + repo }, (error, stdout, stderr) => {
-          if (error) {
-            console.log(error);
-          }
-        });
-      }
+      exec(command2, { cwd: './repositories' }, (error, stdout, stderr) => {
+        console.log('Error during clone: ' + error);
+      });
+
     });
   });
-}
+};
 
 module.exports = clone;
