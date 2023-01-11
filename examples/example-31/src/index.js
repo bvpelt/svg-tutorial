@@ -18,39 +18,25 @@ import {
 import { areaLabel } from 'd3-area-label';
 import { transformData } from './transformData';
 
-const dataURL =
-  'https://gist.githubusercontent.com/curran/18287ef2c4b64ffba32000aad47c292b/raw/eb2dd48d383f09a70b23dc35c3e8eb7b6c7c31ad/all-d3-commits.json';
+const dataURL = './aggregatedData.json';
 const width = window.innerWidth;
 const height = window.innerHeight;
 
-const margin = {
-  top: 20,
-  right: 0,
-  bottom: 20,
-  left: 0,
-};
+const margin = { top: 20, right: 0, bottom: 20, left: 0 };
 const ticks = 20;
 
-const innerWidth =
-  width - margin.left - margin.right;
-const innerHeight =
-  height - margin.top - margin.bottom;
+const innerWidth = width - margin.left - margin.right;
+const innerHeight = height - margin.top - margin.bottom;
 
 const xValue = (d) => d.date;
 
-const render = ({ data, stackedData }) => {
-  const xScale = scaleTime()
-    .domain(extent(data, xValue))
-    .range([0, innerWidth]);
+const render = ({ dates, stackedData }) => {
+  const xScale = scaleTime().domain(extent(dates)).range([0, innerWidth]);
 
   const yScale = scaleLinear()
     .domain([
-      min(stackedData, (d) =>
-        min(d, (d) => d[0])
-      ),
-      max(stackedData, (d) =>
-        max(d, (d) => d[1])
-      ),
+      min(stackedData, (d) => min(d, (d) => d[0])),
+      max(stackedData, (d) => max(d, (d) => d[1])),
     ])
     .range([innerHeight, 0]);
 
@@ -66,14 +52,9 @@ const render = ({ data, stackedData }) => {
 
   const g = svg
     .append('g')
-    .attr(
-      'transform',
-      `translate(${margin.left},${margin.top})`
-    );
+    .attr('transform', `translate(${margin.left},${margin.top})`);
 
-  const random = randomNormal.source(
-    randomLcg(0.5)
-  )(30, 10);
+  const random = randomNormal.source(randomLcg(0.5))(30, 10);
 
   const colorScale = scaleOrdinal().range(
     stackedData.map((country, i) => {
@@ -83,59 +64,35 @@ const render = ({ data, stackedData }) => {
   );
 
   g.append('g').call(
-    axisTop(xScale)
-      .tickSize(-innerHeight)
-      .tickPadding(6)
-      .ticks(ticks)
+    axisTop(xScale).tickSize(-innerHeight).tickPadding(6).ticks(ticks)
   );
   g.append('g')
-    .attr(
-      'transform',
-      `translate(0, ${innerHeight})`
-    )
-    .call(
-      axisBottom(xScale)
-        .tickSize(0)
-        .tickPadding(5)
-        .ticks(ticks)
-    )
+    .attr('transform', `translate(0, ${innerHeight})`)
+    .call(axisBottom(xScale).tickSize(0).tickPadding(5).ticks(ticks))
     .selectAll('line')
     .remove();
 
   // Add a black "envelope" as a backdrop behind the layers,
   // so that we don't get undesirable artifacts where the
   // tick lines are slightly visible in the cracks between layers.
-  stackedData.sort((a, b) =>
-    ascending(a.index, b.index)
-  );
+  stackedData.sort((a, b) => ascending(a.index, b.index));
   const first = stackedData[0];
-  const last =
-    stackedData[stackedData.length - 1];
+  const last = stackedData[stackedData.length - 1];
   const outlinePadding = 0.5;
   const envelope = first.map((d, i) =>
-    Object.assign(
-      [
-        d[0] - outlinePadding,
-        last[i][1] + outlinePadding,
-      ],
-      { data: d.data }
-    )
+    Object.assign([d[0] - outlinePadding, last[i][1] + outlinePadding], {
+      data: d.data,
+    })
   );
-  g.append('path').attr(
-    'd',
-    areaGenerator(envelope)
-  );
+  g.append('path').attr('d', areaGenerator(envelope));
 
   g.append('g')
     .selectAll('path')
     .data(stackedData)
     .enter()
-    .append('a')
-    .attr(
-      'href',
-      (d) => `https://github.com/d3/${d.key}`
-    )
-    .attr('target', '_blank')
+    //    .append('a')
+    //    .attr('href', (d) => `https://github.com/stamen/${d.key}`)
+    //    .attr('target', '_blank')
     .append('path')
     .attr('class', 'area')
     .attr('d', areaGenerator)
@@ -143,10 +100,7 @@ const render = ({ data, stackedData }) => {
     .append('title')
     .text((d) => d.key);
 
-  const labels = g
-    .append('g')
-    .selectAll('text')
-    .data(stackedData);
+  const labels = g.append('g').selectAll('text').data(stackedData);
 
   labels
     .enter()
