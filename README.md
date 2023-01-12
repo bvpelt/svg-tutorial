@@ -46,3 +46,15 @@ see https://www.youtube.com/watch?v=xkBheRZTkaw
 - [example 18](https://bvpelt.github.io/svg-tutorial/examples/example-18) repeating vertical lines with rotating circle
 - [example 19](https://bvpelt.github.io/svg-tutorial/examples/example-19) repeating vertical lines with rotating circle and changing color
 - [example 20](https://bvpelt.github.io/svg-tutorial/examples/example-20) repeating vertical lines with rotating circle and changing color max window size
+- [example 21](https://bvpelt.github.io/svg-tutorial/examples/example-21)
+- [example 22](https://bvpelt.github.io/svg-tutorial/examples/example-22)    
+- [example 23](https://bvpelt.github.io/svg-tutorial/examples/example-23)
+- [example 24](https://bvpelt.github.io/svg-tutorial/examples/example-24)
+- [example 25](https://bvpelt.github.io/svg-tutorial/examples/example-25)
+- [example 26](https://bvpelt.github.io/svg-tutorial/examples/example-26)
+- [example 27](https://bvpelt.github.io/svg-tutorial/examples/example-27)
+- [example 28](https://bvpelt.github.io/svg-tutorial/examples/example-28)
+- [example 29](https://bvpelt.github.io/svg-tutorial/examples/example-29)
+- [example 30](https://bvpelt.github.io/svg-tutorial/examples/example-30)
+- [example 31](https://bvpelt.github.io/svg-tutorial/examples/example-31)
+
