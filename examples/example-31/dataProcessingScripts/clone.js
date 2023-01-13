@@ -1,14 +1,17 @@
 const fs = require('fs');
-const { exec } = require('child_process');
+const { execSync } = require('child_process');
 
 const clone = (repositories) => {
 
-  exec('mkdir repositories');
-  
+  try {
+  execSync('rm -Rf repositories && mkdir repositories');
+} catch(e) {}
+
   repositories.forEach(({ name, org }) => {
     let command = `git clone https://github.com/${org}/${name}.git`;
     console.log(command);
-    exec(command, { cwd: './repositories' }, (error, stdout, stderr) => {
+    try {
+    execSync(command, { cwd: './repositories' }, (error, stdout, stderr) => {
       /*
       let command2 = `git pull https://github.com/${org}/${name}.git`;
 
@@ -17,6 +20,7 @@ const clone = (repositories) => {
       });
 */
     });
+  } catch (e) {}
   });
 };
 

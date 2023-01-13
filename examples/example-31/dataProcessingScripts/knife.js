@@ -2,7 +2,7 @@ const { execSync } = require('child_process');
 
 const knife = (repositories) => {
   try {
-    execSync('mkdir data');
+    execSync('rmdir -Rf data && mkdir data');
   } catch (e) {}
   repositories.forEach(({ name }) => {
     const command = [
