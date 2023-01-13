@@ -7,7 +7,7 @@ const knife = (repositories) => {
   repositories.forEach(({ name }) => {
     const command = [
       `cd repositories/${name};`,
-      'git log',
+      'git -c "diff.renamelimit=10000" log',
       '--pretty=format:"☕%h🔪%ad🔪%an🔪%s🔪%b"',
       '--date="iso"',
       '--no-merges',

@@ -8,3 +8,5 @@ It draws from the following previous work:
 - [Ian Johnson's set of scripts to pull the git history](https://gist.github.com/enjalot/688b9026ed865a790bfb390fca9c9b67)
 - [Curran's fork of Ian's Gist](https://gist.github.com/curran/18287ef2c4b64ffba32000aad47c292b)
 - [Curran's fork that ingests Stamen repositories](https://gist.github.com/curran/eff347bdee768044b742a4b2ed56254c)
+
+- [Rollup starter App](https://github.com/rollup/rollup-starter-app)

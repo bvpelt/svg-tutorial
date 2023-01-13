@@ -9,12 +9,13 @@ const clone = (repositories) => {
     let command = `git clone https://github.com/${org}/${name}.git`;
     console.log(command);
     exec(command, { cwd: './repositories' }, (error, stdout, stderr) => {
+      /*
       let command2 = `git pull https://github.com/${org}/${name}.git`;
 
       exec(command2, { cwd: './repositories' }, (error, stdout, stderr) => {
         console.log('Error during clone: ' + error);
       });
-
+*/
     });
   });
 };
