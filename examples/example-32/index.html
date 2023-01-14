@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>D3 scatterplot</title>
+    <style>
+      body {
+        margin: 0;
+        overflow: hidden;
+      }
+      .tick text {
+        font-size: 24px;
+      }
+    </style>
+    <!--
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+		-->
+    <script src="https://unpkg.com/d3@7.8.1/dist/d3.min.js"></script>
+  </head>
+  <body>
+    <script>
+      const {
+        csv,
+        select,
+        scaleLinear,
+        extent,
+        axisLeft,
+        axisBottom,
+      } = d3; // ES6 structure
+      /*
+      const csvUrl = "https://gist.githubusercontent.com/curran/a08a1080b88344b0c8a7/raw/0e7a9b0a5d22642a06d3d5b9bcbad9890c8ee534/iris.csv";
+      alternative notation
+      */
+
+      // Tweakables
+      const csvUrl = [
+        'https://gist.githubusercontent.com/', // host
+        'curran/', // user
+        'a08a1080b88344b0c8a7/', // gist id
+        'raw/',
+        '0e7a9b0a5d22642a06d3d5b9bcbad9890c8ee534/', // commit
+        'iris.csv', // file name
+      ].join('');
+
+      /* convert strings to numbers */
+      const parseRow = (d) => {
+        d.sepal_length = +d.sepal_length;
+        d.sepal_width = +d.sepal_width;
+        d.petal_length = +d.petal_length;
+        d.petal_width = +d.petal_width;
+        return d;
+      };
+
+      const xValue = (d) => d.petal_length;
+      const yValue = (d) => d.sepal_length;
+
+      const margin = {
+        // see d3 margin convention
+        top: 20,
+        right: 20,
+        bottom: 40,
+        left: 50,
+      };
+      const radius = 5;
+
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+
+      const svg = select('body')
+        .append('svg')
+        .attr('width', width)
+        .attr('height', height);
+
+      // Generic
+      const main = async () => {
+        const data = await csv(csvUrl, parseRow);
+
+        // data processing
+
+        // determine x axis
+        // domain - functional data must map to range - pixels on screen
+        const x = scaleLinear()
+          .domain(extent(data, xValue))
+          .range([
+            margin.left,
+            width - margin.right,
+          ]);
+
+        const y = scaleLinear()
+          .domain(extent(data, yValue))
+          .range([
+            height - margin.bottom,
+            margin.top,
+          ]); // flip y values 0,0 is top left, top by flipping it becomes left bottom
+
+        const marks = data.map((d) => ({
+          x: x(xValue(d)),
+          y: y(yValue(d)),
+        }));
+
+        // rendering
+        svg
+          .selectAll('circle')
+          .data(marks)
+          .join('circle')
+          .attr('cx', (d) => d.x)
+          .attr('cy', (d) => d.y)
+          .attr('r', radius);
+
+        svg
+          .append('g')
+          .attr(
+            'transform',
+            `translate(${margin.left},0)`
+          )
+          .call(axisLeft(y));
+
+        svg
+          .append('g')
+          .attr(
+            'transform',
+            `translate(0, ${
+              height - margin.bottom
+            })`
+          )
+          .call(axisBottom(x));
+      };
+
+      main();
+    </script>
+  </body>
+</html>
