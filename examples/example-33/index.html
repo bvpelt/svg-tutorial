@@ -1,7 +1,10 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Exersice Episode 8 - Scatter plot</title>
+    <title>
+      Fork of Exersice Episode 8 - Scatter plot +
+      tooltips
+    </title>
     <style>
       body {
         margin: 0;
@@ -23,19 +26,25 @@
         axisLeft,
         axisBottom,
       } = d3;
-      
-      const csvUrl = "https://raw.githubusercontent.com/bvpelt/svg-tutorial/main/examples/example-33/karbonhydrate.csv";
+
+      const csvUrl = 'koolhydrate.csv';
       // in csvfile: koolhydraten,vet,kcal,product,eenheid
-      
+
       const parseRow = (d) => {
         d.koolhydraten = +d.koolhydraten;
         d.vet = +d.vet;
-        d.kcal = +d.kcal;        
+        d.kcal = +d.kcal;
         return d;
       };
+
+      const koolhydratenValue = (d) => d.koolhydraten;
+      const vetValue = (d) => d.vet;
+      const kcalValue = (d) => d.kcalValue;
+      const productValue = (d) => d.product;
+      const eenheidValue = (d) => d.eenheid;
       
       const xValue = (d) => d.kcal;
-      const yValue = (d) => d.koolhydraten;
+      const yValue = (d) => d.vet;
       const margin = {
         top: 20,
         right: 20,
@@ -56,15 +65,26 @@
 
         const x = scaleLinear()
           .domain(extent(data, xValue))
-          .range([margin.left, width - margin.right]);
+          .range([
+            margin.left,
+            width - margin.right,
+          ]);
 
         const y = scaleLinear()
           .domain(extent(data, yValue))
-          .range([height - margin.bottom, margin.top]);
+          .range([
+            height - margin.bottom,
+            margin.top,
+          ]);
 
         const marks = data.map((d) => ({
           x: x(xValue(d)),
           y: y(yValue(d)),
+          title: "(kcal: " + `${xValue(d)}` + " vet: " + `${yValue(d)} )`,
+          label: `Product: ${productValue(d)} ${eenheidValue(d)}
+koolhydraten: ${koolhydratenValue(d)}
+vet: ${koolhydratenValue(d)}
+kcal: ${kcalValue(d)}`,
         }));
 
         svg
@@ -73,18 +93,25 @@
           .join('circle')
           .attr('cx', (d) => d.x)
           .attr('cy', (d) => d.y)
-          .attr('r', radius);
+          .attr('r', radius)
+          .append('title')
+          .text((d) => d.label);
 
         svg
           .append('g')
-          .attr('transform', `translate(${margin.left},0)`)
+          .attr(
+            'transform',
+            `translate(${margin.left},0)`
+          )
           .call(axisLeft(y));
 
         svg
           .append('g')
           .attr(
             'transform',
-            `translate(0,${height - margin.bottom})`
+            `translate(0,${
+              height - margin.bottom
+            })`
           )
           .call(axisBottom(x));
       };
