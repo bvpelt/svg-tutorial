@@ -1,0 +1,19 @@
+body {
+  margin: 0;
+  overflow: hidden;
+}
+
+svg {
+  z-index:-1;
+}
+
+rect {
+  fill: none;
+  stroke: black;
+  stroke-width: 2px;
+}
+
+# plot 
+.tick text {
+  font-size: 48px;
+}

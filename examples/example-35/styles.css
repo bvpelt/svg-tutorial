@@ -1,0 +1,15 @@
+body {
+  margin: 0;
+  overflow: hidden;
+}
+
+rect {
+  fill: red;
+  stroke: black;
+  stroke-width: 2px;
+}
+
+# plot 
+.tick text {
+  font-size: 24px;
+}
