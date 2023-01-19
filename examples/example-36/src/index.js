@@ -1,4 +1,7 @@
+//var d3= require ('d3');
+//import * as d3 from 'd3';
 import { max, select } from 'd3';
+
 import { timeTable } from './data';
 import { timePlot } from './timePlot';
 
@@ -26,7 +29,7 @@ const drawGraph = async () => {
         top: 20,
         right: 20,
         bottom: 40,
-        left: 50,
+        left: 100,
       })
   );
 };

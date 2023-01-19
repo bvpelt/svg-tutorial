@@ -1,3 +1,6 @@
+//var d3 = require ('d3');
+import {} from 'd3';
+
 import {
   scaleTime,
   axisLeft,
