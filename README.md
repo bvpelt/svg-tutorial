@@ -57,4 +57,10 @@ see https://www.youtube.com/watch?v=xkBheRZTkaw
 - [example 29](https://bvpelt.github.io/svg-tutorial/examples/example-29)
 - [example 30](https://bvpelt.github.io/svg-tutorial/examples/example-30)
 - [example 31](https://bvpelt.github.io/svg-tutorial/examples/example-31/docs)
+- [example 32](https://bvpelt.github.io/svg-tutorial/examples/example-32/)
+- [example 33](https://bvpelt.github.io/svg-tutorial/examples/example-33/)
+- [example 34](https://bvpelt.github.io/svg-tutorial/examples/example-34/)
+- [example 35](https://bvpelt.github.io/svg-tutorial/examples/example-35/)
+- [example 36](https://bvpelt.github.io/svg-tutorial/examples/example-36/)
+- [example 37](https://bvpelt.github.io/svg-tutorial/examples/example-37/)
 
