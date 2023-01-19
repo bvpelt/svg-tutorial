@@ -31,7 +31,7 @@ export const timePlot = () => {
 
       return new Date(
         rtime.getTime() +
-          numberdays * 24 * 60 * 60 * 1000
+        numberdays * 24 * 60 * 60 * 1000
       );
     }
 
@@ -131,19 +131,19 @@ export const timePlot = () => {
       tooltip
         .html(
           'value: ' +
-            d.value +
-            '<br/>' +
-            ' beginreg: ' +
-            d.tijdstipRegistratie +
-            '<br/>' +
-            ' eindreg: ' +
-            d.eindRegistratie +
-            '<br/>' +
-            ' begingeld: ' +
-            d.beginGeldigheid +
-            '<br/>' +
-            ' eindgeld: ' +
-            d.eindGeldigheid
+          d.value +
+          '<br/>' +
+          ' beginreg: ' +
+          d.tijdstipRegistratie +
+          '<br/>' +
+          ' eindreg: ' +
+          d.eindRegistratie +
+          '<br/>' +
+          ' begingeld: ' +
+          d.beginGeldigheid +
+          '<br/>' +
+          ' eindgeld: ' +
+          d.eindGeldigheid
         )
         .style('left', event.pageX + 5 + 'px')
         .style('top', event.pageY + 5 + 'px');
