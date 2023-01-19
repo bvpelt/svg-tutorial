@@ -4468,7 +4468,7 @@
 
       let mouseover = function (event, d) {
         tooltip.style('opacity', 1);
-        d3.select(this)
+        select(this)
           .style('fill', 'red')
           .style('opacity', 1);
       };
@@ -4497,7 +4497,7 @@
 
       let mouseleave = function (event, d) {
         tooltip.style('opacity', 0);
-        d3.select(this)
+        select(this)
           .style('fill', 'none')
           .style('opacity', 0.8);
       };
