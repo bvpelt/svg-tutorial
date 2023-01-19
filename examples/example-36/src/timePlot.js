@@ -4,6 +4,7 @@ import {
   axisBottom,
   min,
   max,
+  select,
 } from 'd3';
 
 export const timePlot = () => {
@@ -107,8 +108,7 @@ export const timePlot = () => {
     // ref https://d3-graph-gallery.com/graph/interactivity_tooltip.html#mostbasic
     // https://stackoverflow.com/questions/65134858/d3-mouse-is-not-a-function
     //
-    var tooltip = d3
-      .select('#timeplot')
+    var tooltip = select('#timeplot')
       .append('div')
       .style('opacity', 0)
       .attr('class', 'tooltip')
