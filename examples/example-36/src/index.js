@@ -19,14 +19,16 @@ const drawGraph = async () => {
       .data(timeTable)
       .xbValue((d) => d.tijdstipRegistratie)
       .xeValue((d) => d.eindRegistratie)
+      .xLabel('Registratie ->')
       .ybValue((d) => d.beginGeldigheid)
       .yeValue((d) => d.eindGeldigheid)
+      .yLabel('Geldigheid ->')
       .value((d) => d.value)
       .margin({
         top: 20,
         right: 20,
-        bottom: 40,
-        left: 50,
+        bottom: 150,
+        left: 140,
       })
   );
 };

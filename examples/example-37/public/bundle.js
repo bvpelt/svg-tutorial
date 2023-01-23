@@ -75,6 +75,81 @@
   const bisectRight = ascendingBisect.right;
   const bisectCenter = bisector(number).center;
 
+  function extent(values, valueof) {
+    let min;
+    let max;
+    if (valueof === undefined) {
+      for (const value of values) {
+        if (value != null) {
+          if (min === undefined) {
+            if (value >= value) min = max = value;
+          } else {
+            if (min > value) min = value;
+            if (max < value) max = value;
+          }
+        }
+      }
+    } else {
+      let index = -1;
+      for (let value of values) {
+        if ((value = valueof(value, ++index, values)) != null) {
+          if (min === undefined) {
+            if (value >= value) min = max = value;
+          } else {
+            if (min > value) min = value;
+            if (max < value) max = value;
+          }
+        }
+      }
+    }
+    return [min, max];
+  }
+
+  class InternMap extends Map {
+    constructor(entries, key = keyof) {
+      super();
+      Object.defineProperties(this, {_intern: {value: new Map()}, _key: {value: key}});
+      if (entries != null) for (const [key, value] of entries) this.set(key, value);
+    }
+    get(key) {
+      return super.get(intern_get(this, key));
+    }
+    has(key) {
+      return super.has(intern_get(this, key));
+    }
+    set(key, value) {
+      return super.set(intern_set(this, key), value);
+    }
+    delete(key) {
+      return super.delete(intern_delete(this, key));
+    }
+  }
+
+  function intern_get({_intern, _key}, value) {
+    const key = _key(value);
+    return _intern.has(key) ? _intern.get(key) : value;
+  }
+
+  function intern_set({_intern, _key}, value) {
+    const key = _key(value);
+    if (_intern.has(key)) return _intern.get(key);
+    _intern.set(key, value);
+    return value;
+  }
+
+  function intern_delete({_intern, _key}, value) {
+    const key = _key(value);
+    if (_intern.has(key)) {
+      value = _intern.get(key);
+      _intern.delete(key);
+    }
+    return value;
+  }
+
+  function keyof(value) {
+    return value !== null && typeof value === "object" ? value.valueOf() : value;
+  }
+
   const e10 = Math.sqrt(50),
       e5 = Math.sqrt(10),
       e2 = Math.sqrt(2);
@@ -103,6 +178,23 @@
     return [i1, i2, inc];
   }
 
+  function ticks(start, stop, count) {
+    stop = +stop, start = +start, count = +count;
+    if (!(count > 0)) return [];
+    if (start === stop) return [start];
+    const reverse = stop < start, [i1, i2, inc] = reverse ? tickSpec(stop, start, count) : tickSpec(start, stop, count);
+    if (!(i2 >= i1)) return [];
+    const n = i2 - i1 + 1, ticks = new Array(n);
+    if (reverse) {
+      if (inc < 0) for (let i = 0; i < n; ++i) ticks[i] = (i2 - i) / -inc;
+      else for (let i = 0; i < n; ++i) ticks[i] = (i2 - i) * inc;
+    } else {
+      if (inc < 0) for (let i = 0; i < n; ++i) ticks[i] = (i1 + i) / -inc;
+      else for (let i = 0; i < n; ++i) ticks[i] = (i1 + i) * inc;
+    }
+    return ticks;
+  }
+
   function tickIncrement(start, stop, count) {
     stop = +stop, start = +start, count = +count;
     return tickSpec(start, stop, count)[2];
@@ -114,46 +206,18 @@
     return (reverse ? -1 : 1) * (inc < 0 ? 1 / -inc : inc);
   }
 
-  function max(values, valueof) {
-    let max;
-    if (valueof === undefined) {
-      for (const value of values) {
-        if (value != null
-            && (max < value || (max === undefined && value >= value))) {
-          max = value;
-        }
-      }
-    } else {
-      let index = -1;
-      for (let value of values) {
-        if ((value = valueof(value, ++index, values)) != null
-            && (max < value || (max === undefined && value >= value))) {
-          max = value;
-        }
-      }
-    }
-    return max;
-  }
+  function range(start, stop, step) {
+    start = +start, stop = +stop, step = (n = arguments.length) < 2 ? (stop = start, start = 0, 1) : n < 3 ? 1 : +step;
 
-  function min(values, valueof) {
-    let min;
-    if (valueof === undefined) {
-      for (const value of values) {
-        if (value != null
-            && (min > value || (min === undefined && value >= value))) {
-          min = value;
-        }
-      }
-    } else {
-      let index = -1;
-      for (let value of values) {
-        if ((value = valueof(value, ++index, values)) != null
-            && (min > value || (min === undefined && value >= value))) {
-          min = value;
-        }
-      }
+    var i = -1,
+        n = Math.max(0, Math.ceil((stop - start) / step)) | 0,
+        range = new Array(n);
+
+    while (++i < n) {
+      range[i] = start + i * step;
     }
-    return min;
+
+    return range;
   }
 
   function identity(x) {
@@ -2942,13 +3006,17 @@
     this._id = id;
   }
 
+  function transition(name) {
+    return selection().transition(name);
+  }
+
   function newId() {
     return ++id;
   }
 
   var selection_prototype = selection.prototype;
 
-  Transition.prototype = {
+  Transition.prototype = transition.prototype = {
     constructor: Transition,
     select: transition_select,
     selectAll: transition_selectAll,
@@ -3026,6 +3094,522 @@
   selection.prototype.interrupt = selection_interrupt;
   selection.prototype.transition = selection_transition;
 
+  var EOL = {},
+      EOF = {},
+      QUOTE = 34,
+      NEWLINE = 10,
+      RETURN = 13;
+
+  function objectConverter(columns) {
+    return new Function("d", "return {" + columns.map(function(name, i) {
+      return JSON.stringify(name) + ": d[" + i + "] || \"\"";
+    }).join(",") + "}");
+  }
+
+  function customConverter(columns, f) {
+    var object = objectConverter(columns);
+    return function(row, i) {
+      return f(object(row), i, columns);
+    };
+  }
+
+  // Compute unique columns in order of discovery.
+  function inferColumns(rows) {
+    var columnSet = Object.create(null),
+        columns = [];
+
+    rows.forEach(function(row) {
+      for (var column in row) {
+        if (!(column in columnSet)) {
+          columns.push(columnSet[column] = column);
+        }
+      }
+    });
+
+    return columns;
+  }
+
+  function pad(value, width) {
+    var s = value + "", length = s.length;
+    return length < width ? new Array(width - length + 1).join(0) + s : s;
+  }
+
+  function formatYear(year) {
+    return year < 0 ? "-" + pad(-year, 6)
+      : year > 9999 ? "+" + pad(year, 6)
+      : pad(year, 4);
+  }
+
+  function formatDate(date) {
+    var hours = date.getUTCHours(),
+        minutes = date.getUTCMinutes(),
+        seconds = date.getUTCSeconds(),
+        milliseconds = date.getUTCMilliseconds();
+    return isNaN(date) ? "Invalid Date"
+        : formatYear(date.getUTCFullYear()) + "-" + pad(date.getUTCMonth() + 1, 2) + "-" + pad(date.getUTCDate(), 2)
+        + (milliseconds ? "T" + pad(hours, 2) + ":" + pad(minutes, 2) + ":" + pad(seconds, 2) + "." + pad(milliseconds, 3) + "Z"
+        : seconds ? "T" + pad(hours, 2) + ":" + pad(minutes, 2) + ":" + pad(seconds, 2) + "Z"
+        : minutes || hours ? "T" + pad(hours, 2) + ":" + pad(minutes, 2) + "Z"
+        : "");
+  }
+
+  function dsvFormat(delimiter) {
+    var reFormat = new RegExp("[\"" + delimiter + "\n\r]"),
+        DELIMITER = delimiter.charCodeAt(0);
+
+    function parse(text, f) {
+      var convert, columns, rows = parseRows(text, function(row, i) {
+        if (convert) return convert(row, i - 1);
+        columns = row, convert = f ? customConverter(row, f) : objectConverter(row);
+      });
+      rows.columns = columns || [];
+      return rows;
+    }
+
+    function parseRows(text, f) {
+      var rows = [], // output rows
+          N = text.length,
+          I = 0, // current character index
+          n = 0, // current line number
+          t, // current token
+          eof = N <= 0, // current token followed by EOF?
+          eol = false; // current token followed by EOL?
+
+      // Strip the trailing newline.
+      if (text.charCodeAt(N - 1) === NEWLINE) --N;
+      if (text.charCodeAt(N - 1) === RETURN) --N;
+
+      function token() {
+        if (eof) return EOF;
+        if (eol) return eol = false, EOL;
+
+        // Unescape quotes.
+        var i, j = I, c;
+        if (text.charCodeAt(j) === QUOTE) {
+          while (I++ < N && text.charCodeAt(I) !== QUOTE || text.charCodeAt(++I) === QUOTE);
+          if ((i = I) >= N) eof = true;
+          else if ((c = text.charCodeAt(I++)) === NEWLINE) eol = true;
+          else if (c === RETURN) { eol = true; if (text.charCodeAt(I) === NEWLINE) ++I; }
+          return text.slice(j + 1, i - 1).replace(/""/g, "\"");
+        }
+
+        // Find next delimiter or newline.
+        while (I < N) {
+          if ((c = text.charCodeAt(i = I++)) === NEWLINE) eol = true;
+          else if (c === RETURN) { eol = true; if (text.charCodeAt(I) === NEWLINE) ++I; }
+          else if (c !== DELIMITER) continue;
+          return text.slice(j, i);
+        }
+
+        // Return last token before EOF.
+        return eof = true, text.slice(j, N);
+      }
+
+      while ((t = token()) !== EOF) {
+        var row = [];
+        while (t !== EOL && t !== EOF) row.push(t), t = token();
+        if (f && (row = f(row, n++)) == null) continue;
+        rows.push(row);
+      }
+
+      return rows;
+    }
+
+    function preformatBody(rows, columns) {
+      return rows.map(function(row) {
+        return columns.map(function(column) {
+          return formatValue(row[column]);
+        }).join(delimiter);
+      });
+    }
+
+    function format(rows, columns) {
+      if (columns == null) columns = inferColumns(rows);
+      return [columns.map(formatValue).join(delimiter)].concat(preformatBody(rows, columns)).join("\n");
+    }
+
+    function formatBody(rows, columns) {
+      if (columns == null) columns = inferColumns(rows);
+      return preformatBody(rows, columns).join("\n");
+    }
+
+    function formatRows(rows) {
+      return rows.map(formatRow).join("\n");
+    }
+
+    function formatRow(row) {
+      return row.map(formatValue).join(delimiter);
+    }
+
+    function formatValue(value) {
+      return value == null ? ""
+          : value instanceof Date ? formatDate(value)
+          : reFormat.test(value += "") ? "\"" + value.replace(/"/g, "\"\"") + "\""
+          : value;
+    }
+
+    return {
+      parse: parse,
+      parseRows: parseRows,
+      format: format,
+      formatBody: formatBody,
+      formatRows: formatRows,
+      formatRow: formatRow,
+      formatValue: formatValue
+    };
+  }
+
+  var csv = dsvFormat(",");
+
+  var csvParse = csv.parse;
+
+  function responseText(response) {
+    if (!response.ok) throw new Error(response.status + " " + response.statusText);
+    return response.text();
+  }
+
+  function text(input, init) {
+    return fetch(input, init).then(responseText);
+  }
+
+  function dsvParse(parse) {
+    return function(input, init, row) {
+      if (arguments.length === 2 && typeof init === "function") row = init, init = undefined;
+      return text(input, init).then(function(response) {
+        return parse(response, row);
+      });
+    };
+  }
+
+  var csv$1 = dsvParse(csvParse);
+
+  function formatDecimal(x) {
+    return Math.abs(x = Math.round(x)) >= 1e21
+        ? x.toLocaleString("en").replace(/,/g, "")
+        : x.toString(10);
+  }
+
+  // Computes the decimal coefficient and exponent of the specified number x with
+  // significant digits p, where x is positive and p is in [1, 21] or undefined.
+  // For example, formatDecimalParts(1.23) returns ["123", 0].
+  function formatDecimalParts(x, p) {
+    if ((i = (x = p ? x.toExponential(p - 1) : x.toExponential()).indexOf("e")) < 0) return null; // NaN, ±Infinity
+    var i, coefficient = x.slice(0, i);
+
+    // The string returned by toExponential either has the form \d\.\d+e[-+]\d+
+    // (e.g., 1.2e+3) or the form \de[-+]\d+ (e.g., 1e+3).
+    return [
+      coefficient.length > 1 ? coefficient[0] + coefficient.slice(2) : coefficient,
+      +x.slice(i + 1)
+    ];
+  }
+
+  function exponent(x) {
+    return x = formatDecimalParts(Math.abs(x)), x ? x[1] : NaN;
+  }
+
+  function formatGroup(grouping, thousands) {
+    return function(value, width) {
+      var i = value.length,
+          t = [],
+          j = 0,
+          g = grouping[0],
+          length = 0;
+
+      while (i > 0 && g > 0) {
+        if (length + g + 1 > width) g = Math.max(1, width - length);
+        t.push(value.substring(i -= g, i + g));
+        if ((length += g + 1) > width) break;
+        g = grouping[j = (j + 1) % grouping.length];
+      }
+
+      return t.reverse().join(thousands);
+    };
+  }
+
+  function formatNumerals(numerals) {
+    return function(value) {
+      return value.replace(/[0-9]/g, function(i) {
+        return numerals[+i];
+      });
+    };
+  }
+
+  // [[fill]align][sign][symbol][0][width][,][.precision][~][type]
+  var re = /^(?:(.)?([<>=^]))?([+\-( ])?([$#])?(0)?(\d+)?(,)?(\.\d+)?(~)?([a-z%])?$/i;
+
+  function formatSpecifier(specifier) {
+    if (!(match = re.exec(specifier))) throw new Error("invalid format: " + specifier);
+    var match;
+    return new FormatSpecifier({
+      fill: match[1],
+      align: match[2],
+      sign: match[3],
+      symbol: match[4],
+      zero: match[5],
+      width: match[6],
+      comma: match[7],
+      precision: match[8] && match[8].slice(1),
+      trim: match[9],
+      type: match[10]
+    });
+  }
+
+  formatSpecifier.prototype = FormatSpecifier.prototype; // instanceof
+
+  function FormatSpecifier(specifier) {
+    this.fill = specifier.fill === undefined ? " " : specifier.fill + "";
+    this.align = specifier.align === undefined ? ">" : specifier.align + "";
+    this.sign = specifier.sign === undefined ? "-" : specifier.sign + "";
+    this.symbol = specifier.symbol === undefined ? "" : specifier.symbol + "";
+    this.zero = !!specifier.zero;
+    this.width = specifier.width === undefined ? undefined : +specifier.width;
+    this.comma = !!specifier.comma;
+    this.precision = specifier.precision === undefined ? undefined : +specifier.precision;
+    this.trim = !!specifier.trim;
+    this.type = specifier.type === undefined ? "" : specifier.type + "";
+  }
+
+  FormatSpecifier.prototype.toString = function() {
+    return this.fill
+        + this.align
+        + this.sign
+        + this.symbol
+        + (this.zero ? "0" : "")
+        + (this.width === undefined ? "" : Math.max(1, this.width | 0))
+        + (this.comma ? "," : "")
+        + (this.precision === undefined ? "" : "." + Math.max(0, this.precision | 0))
+        + (this.trim ? "~" : "")
+        + this.type;
+  };
+
+  // Trims insignificant zeros, e.g., replaces 1.2000k with 1.2k.
+  function formatTrim(s) {
+    out: for (var n = s.length, i = 1, i0 = -1, i1; i < n; ++i) {
+      switch (s[i]) {
+        case ".": i0 = i1 = i; break;
+        case "0": if (i0 === 0) i0 = i; i1 = i; break;
+        default: if (!+s[i]) break out; if (i0 > 0) i0 = 0; break;
+      }
+    }
+    return i0 > 0 ? s.slice(0, i0) + s.slice(i1 + 1) : s;
+  }
+
+  var prefixExponent;
+
+  function formatPrefixAuto(x, p) {
+    var d = formatDecimalParts(x, p);
+    if (!d) return x + "";
+    var coefficient = d[0],
+        exponent = d[1],
+        i = exponent - (prefixExponent = Math.max(-8, Math.min(8, Math.floor(exponent / 3))) * 3) + 1,
+        n = coefficient.length;
+    return i === n ? coefficient
+        : i > n ? coefficient + new Array(i - n + 1).join("0")
+        : i > 0 ? coefficient.slice(0, i) + "." + coefficient.slice(i)
+        : "0." + new Array(1 - i).join("0") + formatDecimalParts(x, Math.max(0, p + i - 1))[0]; // less than 1y!
+  }
+
+  function formatRounded(x, p) {
+    var d = formatDecimalParts(x, p);
+    if (!d) return x + "";
+    var coefficient = d[0],
+        exponent = d[1];
+    return exponent < 0 ? "0." + new Array(-exponent).join("0") + coefficient
+        : coefficient.length > exponent + 1 ? coefficient.slice(0, exponent + 1) + "." + coefficient.slice(exponent + 1)
+        : coefficient + new Array(exponent - coefficient.length + 2).join("0");
+  }
+
+  var formatTypes = {
+    "%": (x, p) => (x * 100).toFixed(p),
+    "b": (x) => Math.round(x).toString(2),
+    "c": (x) => x + "",
+    "d": formatDecimal,
+    "e": (x, p) => x.toExponential(p),
+    "f": (x, p) => x.toFixed(p),
+    "g": (x, p) => x.toPrecision(p),
+    "o": (x) => Math.round(x).toString(8),
+    "p": (x, p) => formatRounded(x * 100, p),
+    "r": formatRounded,
+    "s": formatPrefixAuto,
+    "X": (x) => Math.round(x).toString(16).toUpperCase(),
+    "x": (x) => Math.round(x).toString(16)
+  };
+
+  function identity$2(x) {
+    return x;
+  }
+
+  var map = Array.prototype.map,
+      prefixes = ["y","z","a","f","p","n","µ","m","","k","M","G","T","P","E","Z","Y"];
+
+  function formatLocale(locale) {
+    var group = locale.grouping === undefined || locale.thousands === undefined ? identity$2 : formatGroup(map.call(locale.grouping, Number), locale.thousands + ""),
+        currencyPrefix = locale.currency === undefined ? "" : locale.currency[0] + "",
+        currencySuffix = locale.currency === undefined ? "" : locale.currency[1] + "",
+        decimal = locale.decimal === undefined ? "." : locale.decimal + "",
+        numerals = locale.numerals === undefined ? identity$2 : formatNumerals(map.call(locale.numerals, String)),
+        percent = locale.percent === undefined ? "%" : locale.percent + "",
+        minus = locale.minus === undefined ? "−" : locale.minus + "",
+        nan = locale.nan === undefined ? "NaN" : locale.nan + "";
+
+    function newFormat(specifier) {
+      specifier = formatSpecifier(specifier);
+
+      var fill = specifier.fill,
+          align = specifier.align,
+          sign = specifier.sign,
+          symbol = specifier.symbol,
+          zero = specifier.zero,
+          width = specifier.width,
+          comma = specifier.comma,
+          precision = specifier.precision,
+          trim = specifier.trim,
+          type = specifier.type;
+
+      // The "n" type is an alias for ",g".
+      if (type === "n") comma = true, type = "g";
+
+      // The "" type, and any invalid type, is an alias for ".12~g".
+      else if (!formatTypes[type]) precision === undefined && (precision = 12), trim = true, type = "g";
+
+      // If zero fill is specified, padding goes after sign and before digits.
+      if (zero || (fill === "0" && align === "=")) zero = true, fill = "0", align = "=";
+
+      // Compute the prefix and suffix.
+      // For SI-prefix, the suffix is lazily computed.
+      var prefix = symbol === "$" ? currencyPrefix : symbol === "#" && /[boxX]/.test(type) ? "0" + type.toLowerCase() : "",
+          suffix = symbol === "$" ? currencySuffix : /[%p]/.test(type) ? percent : "";
+
+      // What format function should we use?
+      // Is this an integer type?
+      // Can this type generate exponential notation?
+      var formatType = formatTypes[type],
+          maybeSuffix = /[defgprs%]/.test(type);
+
+      // Set the default precision if not specified,
+      // or clamp the specified precision to the supported range.
+      // For significant precision, it must be in [1, 21].
+      // For fixed precision, it must be in [0, 20].
+      precision = precision === undefined ? 6
+          : /[gprs]/.test(type) ? Math.max(1, Math.min(21, precision))
+          : Math.max(0, Math.min(20, precision));
+
+      function format(value) {
+        var valuePrefix = prefix,
+            valueSuffix = suffix,
+            i, n, c;
+
+        if (type === "c") {
+          valueSuffix = formatType(value) + valueSuffix;
+          value = "";
+        } else {
+          value = +value;
+
+          // Determine the sign. -0 is not less than 0, but 1 / -0 is!
+          var valueNegative = value < 0 || 1 / value < 0;
+
+          // Perform the initial formatting.
+          value = isNaN(value) ? nan : formatType(Math.abs(value), precision);
+
+          // Trim insignificant zeros.
+          if (trim) value = formatTrim(value);
+
+          // If a negative value rounds to zero after formatting, and no explicit positive sign is requested, hide the sign.
+          if (valueNegative && +value === 0 && sign !== "+") valueNegative = false;
+
+          // Compute the prefix and suffix.
+          valuePrefix = (valueNegative ? (sign === "(" ? sign : minus) : sign === "-" || sign === "(" ? "" : sign) + valuePrefix;
+          valueSuffix = (type === "s" ? prefixes[8 + prefixExponent / 3] : "") + valueSuffix + (valueNegative && sign === "(" ? ")" : "");
+
+          // Break the formatted value into the integer “value” part that can be
+          // grouped, and fractional or exponential “suffix” part that is not.
+          if (maybeSuffix) {
+            i = -1, n = value.length;
+            while (++i < n) {
+              if (c = value.charCodeAt(i), 48 > c || c > 57) {
+                valueSuffix = (c === 46 ? decimal + value.slice(i + 1) : value.slice(i)) + valueSuffix;
+                value = value.slice(0, i);
+                break;
+              }
+            }
+          }
+        }
+
+        // If the fill character is not "0", grouping is applied before padding.
+        if (comma && !zero) value = group(value, Infinity);
+
+        // Compute the padding.
+        var length = valuePrefix.length + value.length + valueSuffix.length,
+            padding = length < width ? new Array(width - length + 1).join(fill) : "";
+
+        // If the fill character is "0", grouping is applied after padding.
+        if (comma && zero) value = group(padding + value, padding.length ? width - valueSuffix.length : Infinity), padding = "";
+
+        // Reconstruct the final output based on the desired alignment.
+        switch (align) {
+          case "<": value = valuePrefix + value + valueSuffix + padding; break;
+          case "=": value = valuePrefix + padding + value + valueSuffix; break;
+          case "^": value = padding.slice(0, length = padding.length >> 1) + valuePrefix + value + valueSuffix + padding.slice(length); break;
+          default: value = padding + valuePrefix + value + valueSuffix; break;
+        }
+
+        return numerals(value);
+      }
+
+      format.toString = function() {
+        return specifier + "";
+      };
+
+      return format;
+    }
+
+    function formatPrefix(specifier, value) {
+      var f = newFormat((specifier = formatSpecifier(specifier), specifier.type = "f", specifier)),
+          e = Math.max(-8, Math.min(8, Math.floor(exponent(value) / 3))) * 3,
+          k = Math.pow(10, -e),
+          prefix = prefixes[8 + e / 3];
+      return function(value) {
+        return f(k * value) + prefix;
+      };
+    }
+
+    return {
+      format: newFormat,
+      formatPrefix: formatPrefix
+    };
+  }
+
+  var locale;
+  var format;
+  var formatPrefix;
+
+  defaultLocale({
+    thousands: ",",
+    grouping: [3],
+    currency: ["$", ""]
+  });
+
+  function defaultLocale(definition) {
+    locale = formatLocale(definition);
+    format = locale.format;
+    formatPrefix = locale.formatPrefix;
+    return locale;
+  }
+
+  function precisionFixed(step) {
+    return Math.max(0, -exponent(Math.abs(step)));
+  }
+
+  function precisionPrefix(step, value) {
+    return Math.max(0, Math.max(-8, Math.min(8, Math.floor(exponent(value) / 3))) * 3 - exponent(Math.abs(step)));
+  }
+
+  function precisionRound(step, max) {
+    step = Math.abs(step), max = Math.abs(max) - step;
+    return Math.max(0, exponent(max) - exponent(step)) + 1;
+  }
+
   function initRange(domain, range) {
     switch (arguments.length) {
       case 0: break;
@@ -3033,6 +3617,148 @@
       default: this.range(range).domain(domain); break;
     }
     return this;
+  }
+
+  const implicit = Symbol("implicit");
+
+  function ordinal() {
+    var index = new InternMap(),
+        domain = [],
+        range = [],
+        unknown = implicit;
+
+    function scale(d) {
+      let i = index.get(d);
+      if (i === undefined) {
+        if (unknown !== implicit) return unknown;
+        index.set(d, i = domain.push(d) - 1);
+      }
+      return range[i % range.length];
+    }
+
+    scale.domain = function(_) {
+      if (!arguments.length) return domain.slice();
+      domain = [], index = new InternMap();
+      for (const value of _) {
+        if (index.has(value)) continue;
+        index.set(value, domain.push(value) - 1);
+      }
+      return scale;
+    };
+
+    scale.range = function(_) {
+      return arguments.length ? (range = Array.from(_), scale) : range.slice();
+    };
+
+    scale.unknown = function(_) {
+      return arguments.length ? (unknown = _, scale) : unknown;
+    };
+
+    scale.copy = function() {
+      return ordinal(domain, range).unknown(unknown);
+    };
+
+    initRange.apply(scale, arguments);
+
+    return scale;
+  }
+
+  function band() {
+    var scale = ordinal().unknown(undefined),
+        domain = scale.domain,
+        ordinalRange = scale.range,
+        r0 = 0,
+        r1 = 1,
+        step,
+        bandwidth,
+        round = false,
+        paddingInner = 0,
+        paddingOuter = 0,
+        align = 0.5;
+
+    delete scale.unknown;
+
+    function rescale() {
+      var n = domain().length,
+          reverse = r1 < r0,
+          start = reverse ? r1 : r0,
+          stop = reverse ? r0 : r1;
+      step = (stop - start) / Math.max(1, n - paddingInner + paddingOuter * 2);
+      if (round) step = Math.floor(step);
+      start += (stop - start - step * (n - paddingInner)) * align;
+      bandwidth = step * (1 - paddingInner);
+      if (round) start = Math.round(start), bandwidth = Math.round(bandwidth);
+      var values = range(n).map(function(i) { return start + step * i; });
+      return ordinalRange(reverse ? values.reverse() : values);
+    }
+
+    scale.domain = function(_) {
+      return arguments.length ? (domain(_), rescale()) : domain();
+    };
+
+    scale.range = function(_) {
+      return arguments.length ? ([r0, r1] = _, r0 = +r0, r1 = +r1, rescale()) : [r0, r1];
+    };
+
+    scale.rangeRound = function(_) {
+      return [r0, r1] = _, r0 = +r0, r1 = +r1, round = true, rescale();
+    };
+
+    scale.bandwidth = function() {
+      return bandwidth;
+    };
+
+    scale.step = function() {
+      return step;
+    };
+
+    scale.round = function(_) {
+      return arguments.length ? (round = !!_, rescale()) : round;
+    };
+
+    scale.padding = function(_) {
+      return arguments.length ? (paddingInner = Math.min(1, paddingOuter = +_), rescale()) : paddingInner;
+    };
+
+    scale.paddingInner = function(_) {
+      return arguments.length ? (paddingInner = Math.min(1, _), rescale()) : paddingInner;
+    };
+
+    scale.paddingOuter = function(_) {
+      return arguments.length ? (paddingOuter = +_, rescale()) : paddingOuter;
+    };
+
+    scale.align = function(_) {
+      return arguments.length ? (align = Math.max(0, Math.min(1, _)), rescale()) : align;
+    };
+
+    scale.copy = function() {
+      return band(domain(), [r0, r1])
+          .round(round)
+          .paddingInner(paddingInner)
+          .paddingOuter(paddingOuter)
+          .align(align);
+    };
+
+    return initRange.apply(rescale(), arguments);
+  }
+
+  function pointish(scale) {
+    var copy = scale.copy;
+
+    scale.padding = scale.paddingOuter;
+    delete scale.paddingInner;
+    delete scale.paddingOuter;
+
+    scale.copy = function() {
+      return pointish(copy());
+    };
+
+    return scale;
+  }
+
+  function point() {
+    return pointish(band.apply(null, arguments).paddingInner(1));
   }
 
   function constants(x) {
@@ -3047,7 +3773,7 @@
 
   var unit = [0, 1];
 
-  function identity$2(x) {
+  function identity$3(x) {
     return x;
   }
 
@@ -3111,14 +3837,14 @@
         transform,
         untransform,
         unknown,
-        clamp = identity$2,
+        clamp = identity$3,
         piecewise,
         output,
         input;
 
     function rescale() {
       var n = Math.min(domain.length, range.length);
-      if (clamp !== identity$2) clamp = clamper(domain[0], domain[n - 1]);
+      if (clamp !== identity$3) clamp = clamper(domain[0], domain[n - 1]);
       piecewise = n > 2 ? polymap : bimap;
       output = input = null;
       return scale;
@@ -3145,7 +3871,7 @@
     };
 
     scale.clamp = function(_) {
-      return arguments.length ? (clamp = _ ? true : identity$2, rescale()) : clamp !== identity$2;
+      return arguments.length ? (clamp = _ ? true : identity$3, rescale()) : clamp !== identity$3;
     };
 
     scale.interpolate = function(_) {
@@ -3163,1526 +3889,594 @@
   }
 
   function continuous() {
-    return transformer()(identity$2, identity$2);
+    return transformer()(identity$3, identity$3);
   }
 
-  function nice(domain, interval) {
-    domain = domain.slice();
-
-    var i0 = 0,
-        i1 = domain.length - 1,
-        x0 = domain[i0],
-        x1 = domain[i1],
-        t;
-
-    if (x1 < x0) {
-      t = i0, i0 = i1, i1 = t;
-      t = x0, x0 = x1, x1 = t;
-    }
-
-    domain[i0] = interval.floor(x0);
-    domain[i1] = interval.ceil(x1);
-    return domain;
-  }
-
-  const t0 = new Date, t1 = new Date;
-
-  function timeInterval(floori, offseti, count, field) {
-
-    function interval(date) {
-      return floori(date = arguments.length === 0 ? new Date : new Date(+date)), date;
-    }
-
-    interval.floor = (date) => {
-      return floori(date = new Date(+date)), date;
-    };
-
-    interval.ceil = (date) => {
-      return floori(date = new Date(date - 1)), offseti(date, 1), floori(date), date;
-    };
-
-    interval.round = (date) => {
-      const d0 = interval(date), d1 = interval.ceil(date);
-      return date - d0 < d1 - date ? d0 : d1;
-    };
-
-    interval.offset = (date, step) => {
-      return offseti(date = new Date(+date), step == null ? 1 : Math.floor(step)), date;
-    };
-
-    interval.range = (start, stop, step) => {
-      const range = [];
-      start = interval.ceil(start);
-      step = step == null ? 1 : Math.floor(step);
-      if (!(start < stop) || !(step > 0)) return range; // also handles Invalid Date
-      let previous;
-      do range.push(previous = new Date(+start)), offseti(start, step), floori(start);
-      while (previous < start && start < stop);
-      return range;
-    };
-
-    interval.filter = (test) => {
-      return timeInterval((date) => {
-        if (date >= date) while (floori(date), !test(date)) date.setTime(date - 1);
-      }, (date, step) => {
-        if (date >= date) {
-          if (step < 0) while (++step <= 0) {
-            while (offseti(date, -1), !test(date)) {} // eslint-disable-line no-empty
-          } else while (--step >= 0) {
-            while (offseti(date, +1), !test(date)) {} // eslint-disable-line no-empty
-          }
-        }
-      });
-    };
-
-    if (count) {
-      interval.count = (start, end) => {
-        t0.setTime(+start), t1.setTime(+end);
-        floori(t0), floori(t1);
-        return Math.floor(count(t0, t1));
-      };
-
-      interval.every = (step) => {
-        step = Math.floor(step);
-        return !isFinite(step) || !(step > 0) ? null
-            : !(step > 1) ? interval
-            : interval.filter(field
-                ? (d) => field(d) % step === 0
-                : (d) => interval.count(0, d) % step === 0);
-      };
-    }
-
-    return interval;
-  }
-
-  const millisecond = timeInterval(() => {
-    // noop
-  }, (date, step) => {
-    date.setTime(+date + step);
-  }, (start, end) => {
-    return end - start;
-  });
-
-  // An optimized implementation for this simple case.
-  millisecond.every = (k) => {
-    k = Math.floor(k);
-    if (!isFinite(k) || !(k > 0)) return null;
-    if (!(k > 1)) return millisecond;
-    return timeInterval((date) => {
-      date.setTime(Math.floor(date / k) * k);
-    }, (date, step) => {
-      date.setTime(+date + step * k);
-    }, (start, end) => {
-      return (end - start) / k;
-    });
-  };
-
-  const durationSecond = 1000;
-  const durationMinute = durationSecond * 60;
-  const durationHour = durationMinute * 60;
-  const durationDay = durationHour * 24;
-  const durationWeek = durationDay * 7;
-  const durationMonth = durationDay * 30;
-  const durationYear = durationDay * 365;
-
-  const second = timeInterval((date) => {
-    date.setTime(date - date.getMilliseconds());
-  }, (date, step) => {
-    date.setTime(+date + step * durationSecond);
-  }, (start, end) => {
-    return (end - start) / durationSecond;
-  }, (date) => {
-    return date.getUTCSeconds();
-  });
-
-  const timeMinute = timeInterval((date) => {
-    date.setTime(date - date.getMilliseconds() - date.getSeconds() * durationSecond);
-  }, (date, step) => {
-    date.setTime(+date + step * durationMinute);
-  }, (start, end) => {
-    return (end - start) / durationMinute;
-  }, (date) => {
-    return date.getMinutes();
-  });
-
-  const utcMinute = timeInterval((date) => {
-    date.setUTCSeconds(0, 0);
-  }, (date, step) => {
-    date.setTime(+date + step * durationMinute);
-  }, (start, end) => {
-    return (end - start) / durationMinute;
-  }, (date) => {
-    return date.getUTCMinutes();
-  });
-
-  const timeHour = timeInterval((date) => {
-    date.setTime(date - date.getMilliseconds() - date.getSeconds() * durationSecond - date.getMinutes() * durationMinute);
-  }, (date, step) => {
-    date.setTime(+date + step * durationHour);
-  }, (start, end) => {
-    return (end - start) / durationHour;
-  }, (date) => {
-    return date.getHours();
-  });
-
-  const utcHour = timeInterval((date) => {
-    date.setUTCMinutes(0, 0, 0);
-  }, (date, step) => {
-    date.setTime(+date + step * durationHour);
-  }, (start, end) => {
-    return (end - start) / durationHour;
-  }, (date) => {
-    return date.getUTCHours();
-  });
-
-  const timeDay = timeInterval(
-    date => date.setHours(0, 0, 0, 0),
-    (date, step) => date.setDate(date.getDate() + step),
-    (start, end) => (end - start - (end.getTimezoneOffset() - start.getTimezoneOffset()) * durationMinute) / durationDay,
-    date => date.getDate() - 1
-  );
-
-  const utcDay = timeInterval((date) => {
-    date.setUTCHours(0, 0, 0, 0);
-  }, (date, step) => {
-    date.setUTCDate(date.getUTCDate() + step);
-  }, (start, end) => {
-    return (end - start) / durationDay;
-  }, (date) => {
-    return date.getUTCDate() - 1;
-  });
-
-  const unixDay = timeInterval((date) => {
-    date.setUTCHours(0, 0, 0, 0);
-  }, (date, step) => {
-    date.setUTCDate(date.getUTCDate() + step);
-  }, (start, end) => {
-    return (end - start) / durationDay;
-  }, (date) => {
-    return Math.floor(date / durationDay);
-  });
-
-  function timeWeekday(i) {
-    return timeInterval((date) => {
-      date.setDate(date.getDate() - (date.getDay() + 7 - i) % 7);
-      date.setHours(0, 0, 0, 0);
-    }, (date, step) => {
-      date.setDate(date.getDate() + step * 7);
-    }, (start, end) => {
-      return (end - start - (end.getTimezoneOffset() - start.getTimezoneOffset()) * durationMinute) / durationWeek;
-    });
-  }
-
-  const timeSunday = timeWeekday(0);
-  const timeMonday = timeWeekday(1);
-  const timeTuesday = timeWeekday(2);
-  const timeWednesday = timeWeekday(3);
-  const timeThursday = timeWeekday(4);
-  const timeFriday = timeWeekday(5);
-  const timeSaturday = timeWeekday(6);
-
-  function utcWeekday(i) {
-    return timeInterval((date) => {
-      date.setUTCDate(date.getUTCDate() - (date.getUTCDay() + 7 - i) % 7);
-      date.setUTCHours(0, 0, 0, 0);
-    }, (date, step) => {
-      date.setUTCDate(date.getUTCDate() + step * 7);
-    }, (start, end) => {
-      return (end - start) / durationWeek;
-    });
-  }
-
-  const utcSunday = utcWeekday(0);
-  const utcMonday = utcWeekday(1);
-  const utcTuesday = utcWeekday(2);
-  const utcWednesday = utcWeekday(3);
-  const utcThursday = utcWeekday(4);
-  const utcFriday = utcWeekday(5);
-  const utcSaturday = utcWeekday(6);
-
-  const timeMonth = timeInterval((date) => {
-    date.setDate(1);
-    date.setHours(0, 0, 0, 0);
-  }, (date, step) => {
-    date.setMonth(date.getMonth() + step);
-  }, (start, end) => {
-    return end.getMonth() - start.getMonth() + (end.getFullYear() - start.getFullYear()) * 12;
-  }, (date) => {
-    return date.getMonth();
-  });
-
-  const utcMonth = timeInterval((date) => {
-    date.setUTCDate(1);
-    date.setUTCHours(0, 0, 0, 0);
-  }, (date, step) => {
-    date.setUTCMonth(date.getUTCMonth() + step);
-  }, (start, end) => {
-    return end.getUTCMonth() - start.getUTCMonth() + (end.getUTCFullYear() - start.getUTCFullYear()) * 12;
-  }, (date) => {
-    return date.getUTCMonth();
-  });
-
-  const timeYear = timeInterval((date) => {
-    date.setMonth(0, 1);
-    date.setHours(0, 0, 0, 0);
-  }, (date, step) => {
-    date.setFullYear(date.getFullYear() + step);
-  }, (start, end) => {
-    return end.getFullYear() - start.getFullYear();
-  }, (date) => {
-    return date.getFullYear();
-  });
-
-  // An optimized implementation for this simple case.
-  timeYear.every = (k) => {
-    return !isFinite(k = Math.floor(k)) || !(k > 0) ? null : timeInterval((date) => {
-      date.setFullYear(Math.floor(date.getFullYear() / k) * k);
-      date.setMonth(0, 1);
-      date.setHours(0, 0, 0, 0);
-    }, (date, step) => {
-      date.setFullYear(date.getFullYear() + step * k);
-    });
-  };
-
-  const utcYear = timeInterval((date) => {
-    date.setUTCMonth(0, 1);
-    date.setUTCHours(0, 0, 0, 0);
-  }, (date, step) => {
-    date.setUTCFullYear(date.getUTCFullYear() + step);
-  }, (start, end) => {
-    return end.getUTCFullYear() - start.getUTCFullYear();
-  }, (date) => {
-    return date.getUTCFullYear();
-  });
-
-  // An optimized implementation for this simple case.
-  utcYear.every = (k) => {
-    return !isFinite(k = Math.floor(k)) || !(k > 0) ? null : timeInterval((date) => {
-      date.setUTCFullYear(Math.floor(date.getUTCFullYear() / k) * k);
-      date.setUTCMonth(0, 1);
-      date.setUTCHours(0, 0, 0, 0);
-    }, (date, step) => {
-      date.setUTCFullYear(date.getUTCFullYear() + step * k);
-    });
-  };
-
-  function ticker(year, month, week, day, hour, minute) {
-
-    const tickIntervals = [
-      [second,  1,      durationSecond],
-      [second,  5,  5 * durationSecond],
-      [second, 15, 15 * durationSecond],
-      [second, 30, 30 * durationSecond],
-      [minute,  1,      durationMinute],
-      [minute,  5,  5 * durationMinute],
-      [minute, 15, 15 * durationMinute],
-      [minute, 30, 30 * durationMinute],
-      [  hour,  1,      durationHour  ],
-      [  hour,  3,  3 * durationHour  ],
-      [  hour,  6,  6 * durationHour  ],
-      [  hour, 12, 12 * durationHour  ],
-      [   day,  1,      durationDay   ],
-      [   day,  2,  2 * durationDay   ],
-      [  week,  1,      durationWeek  ],
-      [ month,  1,      durationMonth ],
-      [ month,  3,  3 * durationMonth ],
-      [  year,  1,      durationYear  ]
-    ];
-
-    function ticks(start, stop, count) {
-      const reverse = stop < start;
-      if (reverse) [start, stop] = [stop, start];
-      const interval = count && typeof count.range === "function" ? count : tickInterval(start, stop, count);
-      const ticks = interval ? interval.range(start, +stop + 1) : []; // inclusive stop
-      return reverse ? ticks.reverse() : ticks;
-    }
-
-    function tickInterval(start, stop, count) {
-      const target = Math.abs(stop - start) / count;
-      const i = bisector(([,, step]) => step).right(tickIntervals, target);
-      if (i === tickIntervals.length) return year.every(tickStep(start / durationYear, stop / durationYear, count));
-      if (i === 0) return millisecond.every(Math.max(tickStep(start, stop, count), 1));
-      const [t, step] = tickIntervals[target / tickIntervals[i - 1][2] < tickIntervals[i][2] / target ? i - 1 : i];
-      return t.every(step);
-    }
-
-    return [ticks, tickInterval];
-  }
-  const [timeTicks, timeTickInterval] = ticker(timeYear, timeMonth, timeSunday, timeDay, timeHour, timeMinute);
-
-  function localDate(d) {
-    if (0 <= d.y && d.y < 100) {
-      var date = new Date(-1, d.m, d.d, d.H, d.M, d.S, d.L);
-      date.setFullYear(d.y);
-      return date;
-    }
-    return new Date(d.y, d.m, d.d, d.H, d.M, d.S, d.L);
-  }
-
-  function utcDate(d) {
-    if (0 <= d.y && d.y < 100) {
-      var date = new Date(Date.UTC(-1, d.m, d.d, d.H, d.M, d.S, d.L));
-      date.setUTCFullYear(d.y);
-      return date;
-    }
-    return new Date(Date.UTC(d.y, d.m, d.d, d.H, d.M, d.S, d.L));
-  }
-
-  function newDate(y, m, d) {
-    return {y: y, m: m, d: d, H: 0, M: 0, S: 0, L: 0};
-  }
-
-  function formatLocale(locale) {
-    var locale_dateTime = locale.dateTime,
-        locale_date = locale.date,
-        locale_time = locale.time,
-        locale_periods = locale.periods,
-        locale_weekdays = locale.days,
-        locale_shortWeekdays = locale.shortDays,
-        locale_months = locale.months,
-        locale_shortMonths = locale.shortMonths;
-
-    var periodRe = formatRe(locale_periods),
-        periodLookup = formatLookup(locale_periods),
-        weekdayRe = formatRe(locale_weekdays),
-        weekdayLookup = formatLookup(locale_weekdays),
-        shortWeekdayRe = formatRe(locale_shortWeekdays),
-        shortWeekdayLookup = formatLookup(locale_shortWeekdays),
-        monthRe = formatRe(locale_months),
-        monthLookup = formatLookup(locale_months),
-        shortMonthRe = formatRe(locale_shortMonths),
-        shortMonthLookup = formatLookup(locale_shortMonths);
-
-    var formats = {
-      "a": formatShortWeekday,
-      "A": formatWeekday,
-      "b": formatShortMonth,
-      "B": formatMonth,
-      "c": null,
-      "d": formatDayOfMonth,
-      "e": formatDayOfMonth,
-      "f": formatMicroseconds,
-      "g": formatYearISO,
-      "G": formatFullYearISO,
-      "H": formatHour24,
-      "I": formatHour12,
-      "j": formatDayOfYear,
-      "L": formatMilliseconds,
-      "m": formatMonthNumber,
-      "M": formatMinutes,
-      "p": formatPeriod,
-      "q": formatQuarter,
-      "Q": formatUnixTimestamp,
-      "s": formatUnixTimestampSeconds,
-      "S": formatSeconds,
-      "u": formatWeekdayNumberMonday,
-      "U": formatWeekNumberSunday,
-      "V": formatWeekNumberISO,
-      "w": formatWeekdayNumberSunday,
-      "W": formatWeekNumberMonday,
-      "x": null,
-      "X": null,
-      "y": formatYear,
-      "Y": formatFullYear,
-      "Z": formatZone,
-      "%": formatLiteralPercent
-    };
-
-    var utcFormats = {
-      "a": formatUTCShortWeekday,
-      "A": formatUTCWeekday,
-      "b": formatUTCShortMonth,
-      "B": formatUTCMonth,
-      "c": null,
-      "d": formatUTCDayOfMonth,
-      "e": formatUTCDayOfMonth,
-      "f": formatUTCMicroseconds,
-      "g": formatUTCYearISO,
-      "G": formatUTCFullYearISO,
-      "H": formatUTCHour24,
-      "I": formatUTCHour12,
-      "j": formatUTCDayOfYear,
-      "L": formatUTCMilliseconds,
-      "m": formatUTCMonthNumber,
-      "M": formatUTCMinutes,
-      "p": formatUTCPeriod,
-      "q": formatUTCQuarter,
-      "Q": formatUnixTimestamp,
-      "s": formatUnixTimestampSeconds,
-      "S": formatUTCSeconds,
-      "u": formatUTCWeekdayNumberMonday,
-      "U": formatUTCWeekNumberSunday,
-      "V": formatUTCWeekNumberISO,
-      "w": formatUTCWeekdayNumberSunday,
-      "W": formatUTCWeekNumberMonday,
-      "x": null,
-      "X": null,
-      "y": formatUTCYear,
-      "Y": formatUTCFullYear,
-      "Z": formatUTCZone,
-      "%": formatLiteralPercent
-    };
-
-    var parses = {
-      "a": parseShortWeekday,
-      "A": parseWeekday,
-      "b": parseShortMonth,
-      "B": parseMonth,
-      "c": parseLocaleDateTime,
-      "d": parseDayOfMonth,
-      "e": parseDayOfMonth,
-      "f": parseMicroseconds,
-      "g": parseYear,
-      "G": parseFullYear,
-      "H": parseHour24,
-      "I": parseHour24,
-      "j": parseDayOfYear,
-      "L": parseMilliseconds,
-      "m": parseMonthNumber,
-      "M": parseMinutes,
-      "p": parsePeriod,
-      "q": parseQuarter,
-      "Q": parseUnixTimestamp,
-      "s": parseUnixTimestampSeconds,
-      "S": parseSeconds,
-      "u": parseWeekdayNumberMonday,
-      "U": parseWeekNumberSunday,
-      "V": parseWeekNumberISO,
-      "w": parseWeekdayNumberSunday,
-      "W": parseWeekNumberMonday,
-      "x": parseLocaleDate,
-      "X": parseLocaleTime,
-      "y": parseYear,
-      "Y": parseFullYear,
-      "Z": parseZone,
-      "%": parseLiteralPercent
-    };
-
-    // These recursive directive definitions must be deferred.
-    formats.x = newFormat(locale_date, formats);
-    formats.X = newFormat(locale_time, formats);
-    formats.c = newFormat(locale_dateTime, formats);
-    utcFormats.x = newFormat(locale_date, utcFormats);
-    utcFormats.X = newFormat(locale_time, utcFormats);
-    utcFormats.c = newFormat(locale_dateTime, utcFormats);
-
-    function newFormat(specifier, formats) {
-      return function(date) {
-        var string = [],
-            i = -1,
-            j = 0,
-            n = specifier.length,
-            c,
-            pad,
-            format;
-
-        if (!(date instanceof Date)) date = new Date(+date);
-
-        while (++i < n) {
-          if (specifier.charCodeAt(i) === 37) {
-            string.push(specifier.slice(j, i));
-            if ((pad = pads[c = specifier.charAt(++i)]) != null) c = specifier.charAt(++i);
-            else pad = c === "e" ? " " : "0";
-            if (format = formats[c]) c = format(date, pad);
-            string.push(c);
-            j = i + 1;
-          }
-        }
-
-        string.push(specifier.slice(j, i));
-        return string.join("");
-      };
-    }
-
-    function newParse(specifier, Z) {
-      return function(string) {
-        var d = newDate(1900, undefined, 1),
-            i = parseSpecifier(d, specifier, string += "", 0),
-            week, day;
-        if (i != string.length) return null;
-
-        // If a UNIX timestamp is specified, return it.
-        if ("Q" in d) return new Date(d.Q);
-        if ("s" in d) return new Date(d.s * 1000 + ("L" in d ? d.L : 0));
-
-        // If this is utcParse, never use the local timezone.
-        if (Z && !("Z" in d)) d.Z = 0;
-
-        // The am-pm flag is 0 for AM, and 1 for PM.
-        if ("p" in d) d.H = d.H % 12 + d.p * 12;
-
-        // If the month was not specified, inherit from the quarter.
-        if (d.m === undefined) d.m = "q" in d ? d.q : 0;
-
-        // Convert day-of-week and week-of-year to day-of-year.
-        if ("V" in d) {
-          if (d.V < 1 || d.V > 53) return null;
-          if (!("w" in d)) d.w = 1;
-          if ("Z" in d) {
-            week = utcDate(newDate(d.y, 0, 1)), day = week.getUTCDay();
-            week = day > 4 || day === 0 ? utcMonday.ceil(week) : utcMonday(week);
-            week = utcDay.offset(week, (d.V - 1) * 7);
-            d.y = week.getUTCFullYear();
-            d.m = week.getUTCMonth();
-            d.d = week.getUTCDate() + (d.w + 6) % 7;
-          } else {
-            week = localDate(newDate(d.y, 0, 1)), day = week.getDay();
-            week = day > 4 || day === 0 ? timeMonday.ceil(week) : timeMonday(week);
-            week = timeDay.offset(week, (d.V - 1) * 7);
-            d.y = week.getFullYear();
-            d.m = week.getMonth();
-            d.d = week.getDate() + (d.w + 6) % 7;
-          }
-        } else if ("W" in d || "U" in d) {
-          if (!("w" in d)) d.w = "u" in d ? d.u % 7 : "W" in d ? 1 : 0;
-          day = "Z" in d ? utcDate(newDate(d.y, 0, 1)).getUTCDay() : localDate(newDate(d.y, 0, 1)).getDay();
-          d.m = 0;
-          d.d = "W" in d ? (d.w + 6) % 7 + d.W * 7 - (day + 5) % 7 : d.w + d.U * 7 - (day + 6) % 7;
-        }
-
-        // If a time zone is specified, all fields are interpreted as UTC and then
-        // offset according to the specified time zone.
-        if ("Z" in d) {
-          d.H += d.Z / 100 | 0;
-          d.M += d.Z % 100;
-          return utcDate(d);
-        }
-
-        // Otherwise, all fields are in local time.
-        return localDate(d);
-      };
-    }
-
-    function parseSpecifier(d, specifier, string, j) {
-      var i = 0,
-          n = specifier.length,
-          m = string.length,
-          c,
-          parse;
-
-      while (i < n) {
-        if (j >= m) return -1;
-        c = specifier.charCodeAt(i++);
-        if (c === 37) {
-          c = specifier.charAt(i++);
-          parse = parses[c in pads ? specifier.charAt(i++) : c];
-          if (!parse || ((j = parse(d, string, j)) < 0)) return -1;
-        } else if (c != string.charCodeAt(j++)) {
-          return -1;
-        }
+  function tickFormat(start, stop, count, specifier) {
+    var step = tickStep(start, stop, count),
+        precision;
+    specifier = formatSpecifier(specifier == null ? ",f" : specifier);
+    switch (specifier.type) {
+      case "s": {
+        var value = Math.max(Math.abs(start), Math.abs(stop));
+        if (specifier.precision == null && !isNaN(precision = precisionPrefix(step, value))) specifier.precision = precision;
+        return formatPrefix(specifier, value);
       }
-
-      return j;
-    }
-
-    function parsePeriod(d, string, i) {
-      var n = periodRe.exec(string.slice(i));
-      return n ? (d.p = periodLookup.get(n[0].toLowerCase()), i + n[0].length) : -1;
-    }
-
-    function parseShortWeekday(d, string, i) {
-      var n = shortWeekdayRe.exec(string.slice(i));
-      return n ? (d.w = shortWeekdayLookup.get(n[0].toLowerCase()), i + n[0].length) : -1;
-    }
-
-    function parseWeekday(d, string, i) {
-      var n = weekdayRe.exec(string.slice(i));
-      return n ? (d.w = weekdayLookup.get(n[0].toLowerCase()), i + n[0].length) : -1;
-    }
-
-    function parseShortMonth(d, string, i) {
-      var n = shortMonthRe.exec(string.slice(i));
-      return n ? (d.m = shortMonthLookup.get(n[0].toLowerCase()), i + n[0].length) : -1;
-    }
-
-    function parseMonth(d, string, i) {
-      var n = monthRe.exec(string.slice(i));
-      return n ? (d.m = monthLookup.get(n[0].toLowerCase()), i + n[0].length) : -1;
-    }
-
-    function parseLocaleDateTime(d, string, i) {
-      return parseSpecifier(d, locale_dateTime, string, i);
-    }
-
-    function parseLocaleDate(d, string, i) {
-      return parseSpecifier(d, locale_date, string, i);
-    }
-
-    function parseLocaleTime(d, string, i) {
-      return parseSpecifier(d, locale_time, string, i);
-    }
-
-    function formatShortWeekday(d) {
-      return locale_shortWeekdays[d.getDay()];
-    }
-
-    function formatWeekday(d) {
-      return locale_weekdays[d.getDay()];
-    }
-
-    function formatShortMonth(d) {
-      return locale_shortMonths[d.getMonth()];
-    }
-
-    function formatMonth(d) {
-      return locale_months[d.getMonth()];
-    }
-
-    function formatPeriod(d) {
-      return locale_periods[+(d.getHours() >= 12)];
-    }
-
-    function formatQuarter(d) {
-      return 1 + ~~(d.getMonth() / 3);
-    }
-
-    function formatUTCShortWeekday(d) {
-      return locale_shortWeekdays[d.getUTCDay()];
-    }
-
-    function formatUTCWeekday(d) {
-      return locale_weekdays[d.getUTCDay()];
-    }
-
-    function formatUTCShortMonth(d) {
-      return locale_shortMonths[d.getUTCMonth()];
-    }
-
-    function formatUTCMonth(d) {
-      return locale_months[d.getUTCMonth()];
-    }
-
-    function formatUTCPeriod(d) {
-      return locale_periods[+(d.getUTCHours() >= 12)];
-    }
-
-    function formatUTCQuarter(d) {
-      return 1 + ~~(d.getUTCMonth() / 3);
-    }
-
-    return {
-      format: function(specifier) {
-        var f = newFormat(specifier += "", formats);
-        f.toString = function() { return specifier; };
-        return f;
-      },
-      parse: function(specifier) {
-        var p = newParse(specifier += "", false);
-        p.toString = function() { return specifier; };
-        return p;
-      },
-      utcFormat: function(specifier) {
-        var f = newFormat(specifier += "", utcFormats);
-        f.toString = function() { return specifier; };
-        return f;
-      },
-      utcParse: function(specifier) {
-        var p = newParse(specifier += "", true);
-        p.toString = function() { return specifier; };
-        return p;
+      case "":
+      case "e":
+      case "g":
+      case "p":
+      case "r": {
+        if (specifier.precision == null && !isNaN(precision = precisionRound(step, Math.max(Math.abs(start), Math.abs(stop))))) specifier.precision = precision - (specifier.type === "e");
+        break;
       }
-    };
-  }
-
-  var pads = {"-": "", "_": " ", "0": "0"},
-      numberRe = /^\s*\d+/, // note: ignores next directive
-      percentRe = /^%/,
-      requoteRe = /[\\^$*+?|[\]().{}]/g;
-
-  function pad(value, fill, width) {
-    var sign = value < 0 ? "-" : "",
-        string = (sign ? -value : value) + "",
-        length = string.length;
-    return sign + (length < width ? new Array(width - length + 1).join(fill) + string : string);
-  }
-
-  function requote(s) {
-    return s.replace(requoteRe, "\\$&");
-  }
-
-  function formatRe(names) {
-    return new RegExp("^(?:" + names.map(requote).join("|") + ")", "i");
-  }
-
-  function formatLookup(names) {
-    return new Map(names.map((name, i) => [name.toLowerCase(), i]));
-  }
-
-  function parseWeekdayNumberSunday(d, string, i) {
-    var n = numberRe.exec(string.slice(i, i + 1));
-    return n ? (d.w = +n[0], i + n[0].length) : -1;
-  }
-
-  function parseWeekdayNumberMonday(d, string, i) {
-    var n = numberRe.exec(string.slice(i, i + 1));
-    return n ? (d.u = +n[0], i + n[0].length) : -1;
-  }
-
-  function parseWeekNumberSunday(d, string, i) {
-    var n = numberRe.exec(string.slice(i, i + 2));
-    return n ? (d.U = +n[0], i + n[0].length) : -1;
-  }
-
-  function parseWeekNumberISO(d, string, i) {
-    var n = numberRe.exec(string.slice(i, i + 2));
-    return n ? (d.V = +n[0], i + n[0].length) : -1;
-  }
-
-  function parseWeekNumberMonday(d, string, i) {
-    var n = numberRe.exec(string.slice(i, i + 2));
-    return n ? (d.W = +n[0], i + n[0].length) : -1;
-  }
-
-  function parseFullYear(d, string, i) {
-    var n = numberRe.exec(string.slice(i, i + 4));
-    return n ? (d.y = +n[0], i + n[0].length) : -1;
-  }
-
-  function parseYear(d, string, i) {
-    var n = numberRe.exec(string.slice(i, i + 2));
-    return n ? (d.y = +n[0] + (+n[0] > 68 ? 1900 : 2000), i + n[0].length) : -1;
-  }
-
-  function parseZone(d, string, i) {
-    var n = /^(Z)|([+-]\d\d)(?::?(\d\d))?/.exec(string.slice(i, i + 6));
-    return n ? (d.Z = n[1] ? 0 : -(n[2] + (n[3] || "00")), i + n[0].length) : -1;
-  }
-
-  function parseQuarter(d, string, i) {
-    var n = numberRe.exec(string.slice(i, i + 1));
-    return n ? (d.q = n[0] * 3 - 3, i + n[0].length) : -1;
-  }
-
-  function parseMonthNumber(d, string, i) {
-    var n = numberRe.exec(string.slice(i, i + 2));
-    return n ? (d.m = n[0] - 1, i + n[0].length) : -1;
-  }
-
-  function parseDayOfMonth(d, string, i) {
-    var n = numberRe.exec(string.slice(i, i + 2));
-    return n ? (d.d = +n[0], i + n[0].length) : -1;
-  }
-
-  function parseDayOfYear(d, string, i) {
-    var n = numberRe.exec(string.slice(i, i + 3));
-    return n ? (d.m = 0, d.d = +n[0], i + n[0].length) : -1;
-  }
-
-  function parseHour24(d, string, i) {
-    var n = numberRe.exec(string.slice(i, i + 2));
-    return n ? (d.H = +n[0], i + n[0].length) : -1;
-  }
-
-  function parseMinutes(d, string, i) {
-    var n = numberRe.exec(string.slice(i, i + 2));
-    return n ? (d.M = +n[0], i + n[0].length) : -1;
-  }
-
-  function parseSeconds(d, string, i) {
-    var n = numberRe.exec(string.slice(i, i + 2));
-    return n ? (d.S = +n[0], i + n[0].length) : -1;
-  }
-
-  function parseMilliseconds(d, string, i) {
-    var n = numberRe.exec(string.slice(i, i + 3));
-    return n ? (d.L = +n[0], i + n[0].length) : -1;
-  }
-
-  function parseMicroseconds(d, string, i) {
-    var n = numberRe.exec(string.slice(i, i + 6));
-    return n ? (d.L = Math.floor(n[0] / 1000), i + n[0].length) : -1;
-  }
-
-  function parseLiteralPercent(d, string, i) {
-    var n = percentRe.exec(string.slice(i, i + 1));
-    return n ? i + n[0].length : -1;
-  }
-
-  function parseUnixTimestamp(d, string, i) {
-    var n = numberRe.exec(string.slice(i));
-    return n ? (d.Q = +n[0], i + n[0].length) : -1;
-  }
-
-  function parseUnixTimestampSeconds(d, string, i) {
-    var n = numberRe.exec(string.slice(i));
-    return n ? (d.s = +n[0], i + n[0].length) : -1;
-  }
-
-  function formatDayOfMonth(d, p) {
-    return pad(d.getDate(), p, 2);
-  }
-
-  function formatHour24(d, p) {
-    return pad(d.getHours(), p, 2);
-  }
-
-  function formatHour12(d, p) {
-    return pad(d.getHours() % 12 || 12, p, 2);
-  }
-
-  function formatDayOfYear(d, p) {
-    return pad(1 + timeDay.count(timeYear(d), d), p, 3);
-  }
-
-  function formatMilliseconds(d, p) {
-    return pad(d.getMilliseconds(), p, 3);
-  }
-
-  function formatMicroseconds(d, p) {
-    return formatMilliseconds(d, p) + "000";
-  }
-
-  function formatMonthNumber(d, p) {
-    return pad(d.getMonth() + 1, p, 2);
-  }
-
-  function formatMinutes(d, p) {
-    return pad(d.getMinutes(), p, 2);
-  }
-
-  function formatSeconds(d, p) {
-    return pad(d.getSeconds(), p, 2);
-  }
-
-  function formatWeekdayNumberMonday(d) {
-    var day = d.getDay();
-    return day === 0 ? 7 : day;
-  }
-
-  function formatWeekNumberSunday(d, p) {
-    return pad(timeSunday.count(timeYear(d) - 1, d), p, 2);
-  }
-
-  function dISO(d) {
-    var day = d.getDay();
-    return (day >= 4 || day === 0) ? timeThursday(d) : timeThursday.ceil(d);
-  }
-
-  function formatWeekNumberISO(d, p) {
-    d = dISO(d);
-    return pad(timeThursday.count(timeYear(d), d) + (timeYear(d).getDay() === 4), p, 2);
-  }
-
-  function formatWeekdayNumberSunday(d) {
-    return d.getDay();
-  }
-
-  function formatWeekNumberMonday(d, p) {
-    return pad(timeMonday.count(timeYear(d) - 1, d), p, 2);
-  }
-
-  function formatYear(d, p) {
-    return pad(d.getFullYear() % 100, p, 2);
-  }
-
-  function formatYearISO(d, p) {
-    d = dISO(d);
-    return pad(d.getFullYear() % 100, p, 2);
-  }
-
-  function formatFullYear(d, p) {
-    return pad(d.getFullYear() % 10000, p, 4);
-  }
-
-  function formatFullYearISO(d, p) {
-    var day = d.getDay();
-    d = (day >= 4 || day === 0) ? timeThursday(d) : timeThursday.ceil(d);
-    return pad(d.getFullYear() % 10000, p, 4);
-  }
-
-  function formatZone(d) {
-    var z = d.getTimezoneOffset();
-    return (z > 0 ? "-" : (z *= -1, "+"))
-        + pad(z / 60 | 0, "0", 2)
-        + pad(z % 60, "0", 2);
-  }
-
-  function formatUTCDayOfMonth(d, p) {
-    return pad(d.getUTCDate(), p, 2);
-  }
-
-  function formatUTCHour24(d, p) {
-    return pad(d.getUTCHours(), p, 2);
-  }
-
-  function formatUTCHour12(d, p) {
-    return pad(d.getUTCHours() % 12 || 12, p, 2);
-  }
-
-  function formatUTCDayOfYear(d, p) {
-    return pad(1 + utcDay.count(utcYear(d), d), p, 3);
-  }
-
-  function formatUTCMilliseconds(d, p) {
-    return pad(d.getUTCMilliseconds(), p, 3);
-  }
-
-  function formatUTCMicroseconds(d, p) {
-    return formatUTCMilliseconds(d, p) + "000";
-  }
-
-  function formatUTCMonthNumber(d, p) {
-    return pad(d.getUTCMonth() + 1, p, 2);
-  }
-
-  function formatUTCMinutes(d, p) {
-    return pad(d.getUTCMinutes(), p, 2);
-  }
-
-  function formatUTCSeconds(d, p) {
-    return pad(d.getUTCSeconds(), p, 2);
-  }
-
-  function formatUTCWeekdayNumberMonday(d) {
-    var dow = d.getUTCDay();
-    return dow === 0 ? 7 : dow;
-  }
-
-  function formatUTCWeekNumberSunday(d, p) {
-    return pad(utcSunday.count(utcYear(d) - 1, d), p, 2);
-  }
-
-  function UTCdISO(d) {
-    var day = d.getUTCDay();
-    return (day >= 4 || day === 0) ? utcThursday(d) : utcThursday.ceil(d);
-  }
-
-  function formatUTCWeekNumberISO(d, p) {
-    d = UTCdISO(d);
-    return pad(utcThursday.count(utcYear(d), d) + (utcYear(d).getUTCDay() === 4), p, 2);
-  }
-
-  function formatUTCWeekdayNumberSunday(d) {
-    return d.getUTCDay();
-  }
-
-  function formatUTCWeekNumberMonday(d, p) {
-    return pad(utcMonday.count(utcYear(d) - 1, d), p, 2);
-  }
-
-  function formatUTCYear(d, p) {
-    return pad(d.getUTCFullYear() % 100, p, 2);
-  }
-
-  function formatUTCYearISO(d, p) {
-    d = UTCdISO(d);
-    return pad(d.getUTCFullYear() % 100, p, 2);
-  }
-
-  function formatUTCFullYear(d, p) {
-    return pad(d.getUTCFullYear() % 10000, p, 4);
-  }
-
-  function formatUTCFullYearISO(d, p) {
-    var day = d.getUTCDay();
-    d = (day >= 4 || day === 0) ? utcThursday(d) : utcThursday.ceil(d);
-    return pad(d.getUTCFullYear() % 10000, p, 4);
-  }
-
-  function formatUTCZone() {
-    return "+0000";
-  }
-
-  function formatLiteralPercent() {
-    return "%";
-  }
-
-  function formatUnixTimestamp(d) {
-    return +d;
-  }
-
-  function formatUnixTimestampSeconds(d) {
-    return Math.floor(+d / 1000);
-  }
-
-  var locale;
-  var timeFormat;
-
-  defaultLocale({
-    dateTime: "%x, %X",
-    date: "%-m/%-d/%Y",
-    time: "%-I:%M:%S %p",
-    periods: ["AM", "PM"],
-    days: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
-    shortDays: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
-    months: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
-    shortMonths: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-  });
-
-  function defaultLocale(definition) {
-    locale = formatLocale(definition);
-    timeFormat = locale.format;
-    locale.parse;
-    locale.utcFormat;
-    locale.utcParse;
-    return locale;
-  }
-
-  function date$1(t) {
-    return new Date(t);
-  }
-
-  function number$3(t) {
-    return t instanceof Date ? +t : +new Date(+t);
-  }
-
-  function calendar(ticks, tickInterval, year, month, week, day, hour, minute, second, format) {
-    var scale = continuous(),
-        invert = scale.invert,
-        domain = scale.domain;
-
-    var formatMillisecond = format(".%L"),
-        formatSecond = format(":%S"),
-        formatMinute = format("%I:%M"),
-        formatHour = format("%I %p"),
-        formatDay = format("%a %d"),
-        formatWeek = format("%b %d"),
-        formatMonth = format("%B"),
-        formatYear = format("%Y");
-
-    function tickFormat(date) {
-      return (second(date) < date ? formatMillisecond
-          : minute(date) < date ? formatSecond
-          : hour(date) < date ? formatMinute
-          : day(date) < date ? formatHour
-          : month(date) < date ? (week(date) < date ? formatDay : formatWeek)
-          : year(date) < date ? formatMonth
-          : formatYear)(date);
+      case "f":
+      case "%": {
+        if (specifier.precision == null && !isNaN(precision = precisionFixed(step))) specifier.precision = precision - (specifier.type === "%") * 2;
+        break;
+      }
     }
+    return format(specifier);
+  }
 
-    scale.invert = function(y) {
-      return new Date(invert(y));
-    };
+  function linearish(scale) {
+    var domain = scale.domain;
 
-    scale.domain = function(_) {
-      return arguments.length ? domain(Array.from(_, number$3)) : domain().map(date$1);
-    };
-
-    scale.ticks = function(interval) {
+    scale.ticks = function(count) {
       var d = domain();
-      return ticks(d[0], d[d.length - 1], interval == null ? 10 : interval);
+      return ticks(d[0], d[d.length - 1], count == null ? 10 : count);
     };
 
     scale.tickFormat = function(count, specifier) {
-      return specifier == null ? tickFormat : format(specifier);
-    };
-
-    scale.nice = function(interval) {
       var d = domain();
-      if (!interval || typeof interval.range !== "function") interval = tickInterval(d[0], d[d.length - 1], interval == null ? 10 : interval);
-      return interval ? domain(nice(d, interval)) : scale;
+      return tickFormat(d[0], d[d.length - 1], count == null ? 10 : count, specifier);
     };
 
-    scale.copy = function() {
-      return copy(scale, calendar(ticks, tickInterval, year, month, week, day, hour, minute, second, format));
+    scale.nice = function(count) {
+      if (count == null) count = 10;
+
+      var d = domain();
+      var i0 = 0;
+      var i1 = d.length - 1;
+      var start = d[i0];
+      var stop = d[i1];
+      var prestep;
+      var step;
+      var maxIter = 10;
+
+      if (stop < start) {
+        step = start, start = stop, stop = step;
+        step = i0, i0 = i1, i1 = step;
+      }
+      
+      while (maxIter-- > 0) {
+        step = tickIncrement(start, stop, count);
+        if (step === prestep) {
+          d[i0] = start;
+          d[i1] = stop;
+          return domain(d);
+        } else if (step > 0) {
+          start = Math.floor(start / step) * step;
+          stop = Math.ceil(stop / step) * step;
+        } else if (step < 0) {
+          start = Math.ceil(start * step) / step;
+          stop = Math.floor(stop * step) / step;
+        } else {
+          break;
+        }
+        prestep = step;
+      }
+
+      return scale;
     };
 
     return scale;
   }
 
-  function time() {
-    return initRange.apply(calendar(timeTicks, timeTickInterval, timeYear, timeMonth, timeSunday, timeDay, timeHour, timeMinute, second, timeFormat).domain([new Date(2000, 0, 1), new Date(2000, 0, 2)]), arguments);
+  function linear$1() {
+    var scale = continuous();
+
+    scale.copy = function() {
+      return copy(scale, linear$1());
+    };
+
+    initRange.apply(scale, arguments);
+
+    return linearish(scale);
   }
 
-  const stringTimes = [
-    {
-      tijdstipRegistratie: '2020-01-01T08:00:00',
-      eindRegistratie:  '2020-02-01T08:00:00',
-      beginGeldigheid: '2020-01-02',
-      eindGeldigheid: null,
-      value: 'versie 1',
-    },
+  const scatterPlot = () => {
+      let width;
+      let height;
+      let data;
+      let xValue;
+      let xType;
+      let xLabel;
+      let xChanged;
+      let yValue;
+      let yType;
+      let yLabel;
+      let yChanged;
+      let productLabel;
+      let margin;
+      let radius;
 
-    {
-      tijdstipRegistratie: '2020-02-01T08:00:00',
-      eindRegistratie: null,
-      beginGeldigheid: '2020-01-02',
-      eindGeldigheid: '2020-02-02',
-      value: 'versie 1',
-    },
-    {
-      tijdstipRegistratie: '2020-02-01T08:00:00',
-      eindRegistratie: '2020-03-01T08:00:00',
-      beginGeldigheid: '2020-02-02',
-      eindGeldigheid: null,
-      value: 'versie 2',
-    },
-      
-    {
-      tijdstipRegistratie: '2020-03-01T08:00:00',
-      eindRegistratie: null,
-      beginGeldigheid: '2020-02-02',
-      eindGeldigheid: '2020-03-02',
-      value: 'versie 2',
-    },
-    
-    {
-      tijdstipRegistratie: '2020-03-01T08:00:00',
-      eindRegistratie: '2020-04-01T08:00:00',
-      beginGeldigheid: '2020-03-02',
-      eindGeldigheid: null,
-      value: 'versie 3',
-    },
-    
-    {
-      tijdstipRegistratie: '2020-04-01T08:00:00',
-      eindRegistratie: null,
-      beginGeldigheid: '2020-03-02',
-      eindGeldigheid: '2020-04-02',
-      value: 'versie 3',
-    },
-    {
-      tijdstipRegistratie: '2020-04-01T08:00:00',
-      eindRegistratie: null,
-      beginGeldigheid: '2020-04-02',
-      eindGeldigheid: null,
-      value: 'versie 4',
-    },  
-  ];
 
-  var timeTable = [];
+      /*
+      const computeScale = (type, data, value, axRange) => {
+          let scale;
 
-  stringTimes.forEach((d) => {
-    let timeLine = {};
-    timeLine.tijdstipRegistratie = new Date(d.tijdstipRegistratie + 'Z');
-    timeLine.eindRegistratie = (timeLine.eindRegistratie !== null) ? new Date(d.eindRegistratie + 'Z') : null;
-    timeLine.beginGeldigheid = new Date(d.beginGeldigheid + 'Z');
-    timeLine.eindGeldigheid = (timeLine.eindGeldigheid  !== null) ? new Date(d.eindGeldigheid + 'Z'): null;
-    timeLine.value = d.value;
+          switch (type) {
+              case 'categorical':
+                  scale = scalePoint()
+                      .domain(data.map(value))
+                      .padding(0.2).range(axRange);
+                  break;
+              case 'time':
+                  scale = scaleTime().domain(
+                      extend(data, value)
+                  ).range(axRange);
+                  break;
+              case 'quantitative':
+              default:
+                  scale = scaleLinear().domain(
+                      extent(data, value)
+                  ).range(axRange);
+                  return scale;
+          }
+      };
+  */
+      const my = (selection) => {
 
-    timeTable.push(timeLine);
-  });
+          const x = (xType === 'categorical'
+              ? point()
+                  .domain(data.map(xValue))
+                  .padding(0.2)
+              : linear$1().domain(extent(data, xValue))
+          ).range([margin.left, width - margin.right]);
 
-  const timePlot = () => {
-    let width;
-    let height;
-    let data;
-    let xbValue;
-    let xeValue;
-    let xLabel;
-    let ybValue;
-    let yeValue;
-    let yLabel;
-    let value;
-    let margin;
+          const y = (yType === 'categorical'
+              ? point()
+                  .domain(data.map(yValue))
+                  .padding(0.3)
+              : linear$1().domain(extent(data, yValue))
+          ).range([height - margin.bottom, margin.top]);
 
-    const my = (selection) => {
-      // date function
-      // - check dates
-      // - addDate - for not yet ended periods
-      //
-      function isValidDate(d) {
-        return d instanceof Date && !isNaN(d);
-      }
 
-      function addDate(d, numberdays) {
-        let rtime = new Date(d);
+          const marks = data
+              .filter((d) =>
+                  productLabel === 'All'
+                      ? d.product == d.product
+                      : d.product == productLabel
+              )
+              .map((d) => ({
+                  x: x(xValue(d)),
+                  y: y(yValue(d)),
+              }));
 
-        return new Date(
-          rtime.getTime() +
-          numberdays * 24 * 60 * 60 * 1000
-        );
-      }
+          const t = transition().duration(1000);
 
-      const dateTimeFormat = timeFormat('%Y-%m-%d %H:%M:%S');
-      const dateFormat = timeFormat('%Y-%m-%d');
+          const positionCircles = (circles) => {
+              circles
+                  .attr('cx', (d) => d.x)
+                  .attr('cy', (d) => d.y);
+          };
 
-      // determine maximum values for registrie/geldigheid of dataset
-      const tempxMax = max(data, (d) =>
-        isValidDate(d.eindRegistratie)
-          ? d.eindRegistratie
-          : d.tijdstipRegistratie
-      );
+          const initializeRadius = (circles) => {
+              circles.attr('r', 0);
+          };
 
-      const tempyMax = max(data, (d) =>
-        isValidDate(d.eindGeldigheid)
-          ? d.eindGeldigheid
-          : d.beginGeldigheid
-      );
+          const growRadius = (enter) => {
+              enter.transition(t).attr('r', radius);
+          };
 
-      // determine maximum values for the graph
-      // for not yet defined eindregistratie/eindgeldigheid use temporary maximum and add 7 days
-      const extraDays = 7;
-      const xMax = addDate(tempxMax, extraDays);
-      const yMax = addDate(tempyMax, extraDays);
+          const shrinkRadius = (enter) => {
+              enter.transition(t).attr('r', 0).remove();
+          };
 
-      // Generate temporary data set with adjusted maximum for eindregistratie/eindgeldighei
-      const tmarks = data.map((d) => ({
-        beginGeldigheid: d.beginGeldigheid,
-        eindGeldigheid: isValidDate(
-          d.eindGeldigheid
-        )
-          ? d.eindGeldigheid
-          : yMax,
-        tijdstipRegistratie: d.tijdstipRegistratie,
-        eindRegistratie: isValidDate(
-          d.eindRegistratie
-        )
-          ? d.eindRegistratie
-          : xMax,
-        value: d.value,
-      }));
+          //X-Axis label
+          const xAxisLabel = selection
+              .selectAll('.x-label')
+              .data([null])
+              .join('text')
+              .attr('class', 'x-label')
+              .text(xLabel)
+              .attr('x', width - margin.left * 0.5)
+              .attr('y', height - margin.bottom * 1.2)
+              .attr('fill', 'grey')
+              .attr('opacity', 0.7)
+              .attr('text-anchor', 'end');
 
-      // Define x/y scales
-      const x = time()
-        .domain([
-          min(tmarks, xbValue),
-          max(tmarks, xeValue),
-        ])
-        .range([margin.left, width - margin.right]);
+          if (xChanged) {
+              xAxisLabel
+                  .attr('x', width + margin.left)
+                  .transition(t)
+                  .attr('x', width - margin.left * 0.5);
 
-      const y = time()
-        .domain([
-          min(tmarks, ybValue),
-          max(tmarks, yeValue),
-        ])
-        .range([
-          height - margin.bottom,
-          margin.top,
-        ]);
+              xChanged = false;
+          }
 
-      // Generate dataset for visualisation
-      // especially calculate width/height of timeboxes
-      const marks = tmarks.map((d, i) => ({
-        x: x(xbValue(d)),
-        y: y(yeValue(d)),
-        tijdstipRegistratie: xbValue(d),
-        eindRegistratie: xeValue(d),
-        beginGeldigheid: ybValue(d),
-        eindGeldigheid: yeValue(d),
-        value: value(d),
-        width: x(xeValue(d)) - x(xbValue(d)),
-        height: y(ybValue(d)) - y(yeValue(d)),
-      }));
+          //Y-Axis label
+          const yAxisLabel = selection
+              .selectAll('.y-label')
+              .data([null])
+              .join('text')
+              .attr('class', 'y-label')
+              .text(yLabel)
+              .attr('x', margin.left + 10)
+              .attr('y', margin.top * 1.4)
+              .attr('fill', 'grey')
+              .attr('opacity', 0.7)
+              .attr('text-anchor', 'start');
 
-      // create a tooltip
-      // ref https://d3-graph-gallery.com/graph/interactivity_tooltip.html#mostbasic
-      // https://stackoverflow.com/questions/65134858/d3-mouse-is-not-a-function
-      //
-      var tooltip = select('#timeplot')
-        .append('div')
-        .style('opacity', 0)
-        .attr('class', 'tooltip')
-        .style('background-color', 'white')
-        .style('border', 'solid')
-        .style('position', 'absolute')
-        .style('border-width', '2px')
-        .style('border-radius', '5px')
-        .style('padding', '5px')
-        .style('z-index', '100');
+          if (yChanged) {
+              yAxisLabel
+                  .attr('y', 0)
+                  .transition(t)
+                  .attr('y', margin.top * 1.4);
 
-      let mouseover = function (event, d) {
-        tooltip.style('opacity', 1);
-        select(this)
-          .style('fill', 'red')
-          .style('opacity', 1);
+              yChanged = false;
+          }
+
+          const circles = selection
+              .selectAll('circle')
+              .data(marks)
+              .join(
+                  (enter) =>
+                      enter
+                          .append('circle')
+                          .call(positionCircles)
+                          .call(initializeRadius)
+                          .call(growRadius),
+                  (update) =>
+                      update.call((update) =>
+                          update
+                              .transition(t)
+                              .delay((d, i) => i * 10)
+                              .call(positionCircles)
+                      ),
+                  (exit) => exit.call(shrinkRadius)
+              );
+
+          selection
+              .selectAll('.y-axis')
+              .data([null])
+              .join('g')
+              .attr('class', 'y-axis')
+              .attr(
+                  'transform',
+                  `translate(${margin.left},0)`
+              )
+              .transition(t)
+              .call(axisLeft(y));
+
+          selection
+              .selectAll('.x-axis')
+              .data([null])
+              .join('g')
+              .attr('class', 'x-axis')
+              .attr(
+                  'transform',
+                  `translate(0,${height - margin.bottom})`
+              )
+              .transition(t)
+              .call(axisBottom(x))
+              .selectAll('text')
+              .attr(
+                  'transform',
+                  'translate(15,50)rotate(90)'
+              );
       };
 
-      let mousemove = function (event, d) {
-        tooltip
-          .html(
-            'value: ' +
-            d.value +
-            '<br/>' +
-            ' beginreg: ' +
-            dateTimeFormat(d.tijdstipRegistratie) +
-            '<br/>' +
-            ' eindreg: ' +
-            dateTimeFormat(d.eindRegistratie) +
-            '<br/>' +
-            ' begingeld: ' +
-            dateFormat(d.beginGeldigheid) +
-            '<br/>' +
-            ' eindgeld: ' +
-            dateFormat(d.eindGeldigheid)
-          )
-          .style('left', event.pageX + 5 + 'px')
-          .style('top', event.pageY + 5 + 'px');
+      my.width = function (_) {
+          return arguments.length
+              ? ((width = +_), my)
+              : width;
       };
 
-      let mouseleave = function (event, d) {
-        tooltip.style('opacity', 0);
-        select(this)
-          .style('fill', 'none')
-          .style('opacity', 0.8);
+      my.height = function (_) {
+          return arguments.length
+              ? ((height = +_), my)
+              : height;
       };
 
-      // Draw the graph
-      selection
-        .selectAll('rect')
-        .data(marks)
-        .join('rect')
-        .attr('x', (d) => d.x)
-        .attr('y', (d) => d.y)
-        .attr('width', (d) => d.width)
-        .attr('height', (d) => d.height)
-        .on('mouseover', mouseover)
-        .on('mousemove', mousemove)
-        .on('mouseleave', mouseleave);
+      my.data = function (_) {
+          return arguments.length
+              ? ((data = _), my)
+              : data;
+      };
 
-      selection
-        .append('g')
-        .attr('class', 'y-axis')
-        .attr(
-          'transform',
-          `translate(${margin.left},0)`
-        )
-        .call(axisLeft(y)
-          .tickFormat(timeFormat('%Y-%m')));
+      my.xValue = function (_) {
+          return arguments.length
+              ? ((xValue = _), my)
+              : xValue;
+      };
 
-      selection
-        .append('g')
-        .attr('class', 'x-axis')
-        .attr(
-          'transform',
-          `translate(0, ${height - margin.bottom})`
-        )
-        .call(axisBottom(x)
-          .tickFormat(timeFormat('%Y-%m'))
-        )
-        
-        .selectAll("text")
-        .style("text-anchor", "end")
-        .attr("dx", "-.8em")
-        .attr("dy", ".15em")
-        .attr("transform", "rotate(-90)");
+      my.xType = function (_) {
+          return arguments.length
+              ? ((xType = _), my)
+              : xType;
+      };
 
-      selection
-        .selectAll('text.x-axis-label')
-        .data([null]) // single element
-        .join('text')
-        .attr('class', 'x-axis-label')
-        .attr('x', `${width / 2}`)
-        .attr('y', `${height - 10}`)
-        .style('text-anchor', 'middle')
-        .text(xLabel);
+      my.xLabel = function (_) {
+          return arguments.length
+              ? ((xLabel = _), my)
+              : xLabel;
+      };
 
-      selection
-        .selectAll('text.y-axis-label')
-        .data([null]) // single element
-        .join('text')
-        .attr('class', 'y-axis-label')
-        .attr(
-          'transform',
-          `translate(30,${height / 2})rotate(-90)`)
-        .style('text-anchor', 'middle')
-        .text(yLabel)
-        ;
-    };
+      my.xChanged = function (_) {
+          return arguments.length
+              ? ((xChanged = _), my)
+              : xChanged;
+      };
 
-    my.width = function (_) {
-      return arguments.length
-        ? ((width = +_), my)
-        : width;
-    };
+      my.yValue = function (_) {
+          return arguments.length
+              ? ((yValue = _), my)
+              : yValue;
+      };
 
-    my.height = function (_) {
-      return arguments.length
-        ? ((height = +_), my)
-        : height;
-    };
+      my.yType = function (_) {
+          return arguments.length
+              ? ((yType = _), my)
+              : yType;
+      };
 
-    my.data = function (_) {
-      return arguments.length
-        ? ((data = _), my)
-        : data;
-    };
+      my.yLabel = function (_) {
+          return arguments.length
+              ? ((yLabel = _), my)
+              : yLabel;
+      };
 
-    my.xbValue = function (_) {
-      return arguments.length
-        ? ((xbValue = _), my)
-        : xbValue;
-    };
+      my.yChanged = function (_) {
+          return arguments.length
+              ? ((yChanged = _), my)
+              : yChanged;
+      };
+      my.margin = function (_) {
+          return arguments.length
+              ? ((margin = _), my)
+              : margin;
+      };
 
-    my.xeValue = function (_) {
-      return arguments.length
-        ? ((xeValue = _), my)
-        : xeValue;
-    };
+      my.radius = function (_) {
+          return arguments.length
+              ? ((radius = +_), my)
+              : radius;
+      };
 
-    my.xLabel = function (_) {
-      return arguments.length
-        ? ((xLabel = _), my)
-        : xLabel;
-    };
+      my.productLabel = function (_) {
+          return arguments.length
+              ? ((productLabel = _), my)
+              : productLabel;
+      };
 
-    my.ybValue = function (_) {
-      return arguments.length
-        ? ((ybValue = _), my)
-        : ybValue;
-    };
+      return my;
+  };
 
-    my.yeValue = function (_) {
-      return arguments.length
-        ? ((yeValue = _), my)
-        : yeValue;
-    };
+  const menu = () => {
+      let id;
+      let labelText;
+      let options;
+      const listeners = dispatch('change');
 
-    my.yLabel = function (_) {
-      return arguments.length
-        ? ((yLabel = _), my)
-        : yLabel;
-    };
+      const my = (selection) => {
+          selection
+              .selectAll('label')
+              .data([null])
+              .join('label')
+              .attr('for', id)
+              .text(labelText);
 
-    my.margin = function (_) {
-      return arguments.length
-        ? ((margin = _), my)
-        : margin;
-    };
+          selection
+              .selectAll('select')
+              .data([null])
+              .join('select')
+              .attr('id', id)
+              .on('change', (event) => {
+                  listeners.call('change', null, [
+                      // Label Text
+                      event.target.options[
+                          event.target.selectedIndex
+                      ].text,
+                      // Variable name
+                      event.target.value,
+                  ]);
+              })
+              .selectAll('option')
+              .data(options)
+              .join('option')
+              .attr('value', (d) => d.value)
+              .text((d) => d.text);
+      };
 
-    my.xWidth = function (_) {
-      return arguments.length
-        ? ((xWidth = _), my)
-        : xWidth;
-    };
+      my.id = function (_) {
+          return arguments.length ? ((id = _), my) : id;
+      };
 
-    my.yHeight = function (_) {
-      return arguments.length
-        ? ((yHeight = _), my)
-        : yHeight;
-    };
+      my.labelText = function (_) {
+          return arguments.length
+              ? ((labelText = _), my)
+              : labelText;
+      };
 
-    my.value = function (_) {
-      return arguments.length
-        ? ((value = _), my)
-        : value;
-    };
+      my.options = function (_) {
+          return arguments.length
+              ? ((options = _), my)
+              : options;
+      };
 
-    return my;
+      my.on = function () {
+          var value = listeners.on.apply(
+              listeners,
+              arguments
+          );
+          return value === listeners ? my : value;
+      };
+
+      return my;
+  };
+
+  const csvUrl =
+    'https://raw.githubusercontent.com/bvpelt/svg-tutorial/main/examples/example-32/karbonhydrate.csv';
+  //koolhydraten,vet,kcal,product,eenheid
+
+  const parseRow = (d) => {
+    d.koolhydraten = +d.koolhydraten;
+    d.vet = +d.vet;
+    d.kcal = +d.kcal;
+    d.product = d.product.trim();
+    d.eenheid = d.eenheid.trim();
+    return d;
   };
 
   const width = window.innerWidth;
   const height = window.innerHeight;
-
-  const svg = select('#timeplot')
+  const svg = select('body')
     .append('svg')
     .attr('width', width)
     .attr('height', height);
 
+  const menuContainer = select('body')
+    .append('div')
+    .attr('class', 'menu-container');
 
-  const drawGraph = async () => {
-    svg.call(
-      timePlot()
-        .width(width)
-        .height(height)
-        .data(timeTable)
-        .xbValue((d) => d.tijdstipRegistratie)
-        .xeValue((d) => d.eindRegistratie)
-        .xLabel('Registratie ->')
-        .ybValue((d) => d.beginGeldigheid)
-        .yeValue((d) => d.eindGeldigheid)
-        .yLabel('Geldigheid ->')
-        .value((d) => d.value)
-        .margin({
-          top: 20,
-          right: 20,
-          bottom: 150,
-          left: 140,
+  const xMenu = menuContainer.append('div');
+  const yMenu = menuContainer.append('div');
+  const productMenu = menuContainer.append('div');
+
+  const drawData = async () => {
+    const options = [
+      {
+        value: 'koolhydraten',
+        text: 'Koolhydraten',
+        type: 'quantitative',
+      },
+      {
+        value: 'vet',
+        text: 'Vet',
+        type: 'quantitative',
+      },
+      //    {
+      //      value: 'vet > 50',
+      //      text: 'Vet > 50',
+      //      type: 'quantitative',
+      //    },
+      {
+        value: 'kcal',
+        text: 'Kcal',
+        type: 'quantitative',
+      },
+      {
+        value: 'eenheid',
+        text: 'Eenheid',
+        type: 'categorical',
+      },
+    ];
+
+    const result = await csv$1(csvUrl, parseRow);
+
+    const productValues = [];
+    productValues.push({
+      value: 'All',
+      text: 'All',
+    });
+
+
+    result.forEach((data) => {
+      productValues.push({
+        value: data.product.trim(),
+        text: data.product.trim(),
+      });
+    });
+
+    const columnToType = new Map(
+      options.map(({ value, type }) => [
+        value,
+        type,
+      ])
+    );
+
+    const getType = (column) =>
+      columnToType.get(column);
+
+    const plot = scatterPlot()
+      .width(width)
+      .height(height)
+      .data(result)
+      .xValue((d) => d.koolhydraten)
+      .xType(getType('koolhydraten'))
+      .xLabel('Koolhydraten')
+      .yValue((d) => d.koolhydraten)
+      .productLabel('All')
+      .yType(getType('koolhydraten'))
+      .yLabel('Koolhydraten')
+      .margin({
+        top: 50,
+        right: 50,
+        bottom: 130,
+        left: 120,
+      })
+      .radius(5);
+
+    svg.call(plot);
+
+    xMenu.call(
+      menu()
+        .id('x-menu')
+        .labelText('X:')
+        .options(options)
+        .on('change', (column) => {
+
+          const varName = column[1];
+          const labelName = column[0];
+          console.log('varName: ' + varName + ' labelName: ' + labelName);
+          console.log('xType: ' + getType(varName));
+          plot
+            .xValue((d) => d[varName])
+            .xLabel(labelName)
+            .xChanged(true)
+            .xType(getType(varName));
+          svg.call(plot);
+        })
+    );
+
+    yMenu.call(
+      menu()
+        .id('y-menu')
+        .labelText('Y:')
+        .options(options)
+        .on('change', (column) => {
+          //console.log(column);
+          const varName = column[1];
+          const labelName = column[0];
+
+          plot
+            .yValue((d) => d[varName])
+            .yLabel(labelName)
+            .yChanged(true)
+            .yType(getType(varName));
+          svg.call(plot);
+        })
+    );
+
+    productMenu.call(
+      menu()
+        .id('product-menu')
+        .labelText('Product:')
+        .options(productValues)
+        .on('change', (column) => {
+          //console.log(column);
+          const varName = column[1];
+          const labelName = column[0];
+
+          plot.productLabel(labelName);
+          svg.call(plot);
         })
     );
   };
 
-  drawGraph();
+  drawData();
 
 }());
 //# sourceMappingURL=bundle.js.map

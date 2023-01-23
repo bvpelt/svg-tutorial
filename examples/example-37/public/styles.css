@@ -1,0 +1,36 @@
+body {
+  margin: 0;
+  overflow: hidden;
+}
+
+circle {
+  opacity: 0.2;
+}
+
+text,
+select,
+label,
+option {
+  font-size: 20px;
+  font-family: 'Share Tech', sans-serif;
+}
+
+.menu-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-around; 
+}
+
+
+.y-label,
+.x-label {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.x-axis { 
+  text-align: start;
+}
