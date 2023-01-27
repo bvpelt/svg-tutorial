@@ -1401,7 +1401,7 @@
     prototype.constructor = constructor;
   }
 
-  function extend(parent, definition) {
+  function extend$1(parent, definition) {
     var prototype = Object.create(parent.prototype);
     for (var key in definition) prototype[key] = definition[key];
     return prototype;
@@ -1651,7 +1651,7 @@
     this.opacity = +opacity;
   }
 
-  define(Rgb, rgb, extend(Color, {
+  define(Rgb, rgb, extend$1(Color, {
     brighter(k) {
       k = k == null ? brighter : Math.pow(brighter, k);
       return new Rgb(this.r * k, this.g * k, this.b * k, this.opacity);
@@ -1749,7 +1749,7 @@
     this.opacity = +opacity;
   }
 
-  define(Hsl, hsl, extend(Color, {
+  define(Hsl, hsl, extend$1(Color, {
     brighter(k) {
       k = k == null ? brighter : Math.pow(brighter, k);
       return new Hsl(this.h, this.s, this.l * k, this.opacity);
@@ -4002,46 +4002,36 @@
       let radius;
 
 
-      /*
-      const computeScale = (type, data, value, axRange) => {
+
+      const computeScale = (type, data, value) => {
           let scale;
 
           switch (type) {
               case 'categorical':
-                  scale = scalePoint()
+                  scale = point()
                       .domain(data.map(value))
-                      .padding(0.2).range(axRange);
+                      .padding(0.2);
                   break;
               case 'time':
                   scale = scaleTime().domain(
                       extend(data, value)
-                  ).range(axRange);
+                  );
                   break;
               case 'quantitative':
               default:
-                  scale = scaleLinear().domain(
+                  scale = linear$1().domain(
                       extent(data, value)
-                  ).range(axRange);
-                  return scale;
+                  );
+                  break;
           }
+          return scale;
+
       };
-  */
-      const my = (selection) => {
 
-          const x = (xType === 'categorical'
-              ? point()
-                  .domain(data.map(xValue))
-                  .padding(0.2)
-              : linear$1().domain(extent(data, xValue))
-          ).range([margin.left, width - margin.right]);
+      const my = (selection) => {      
 
-          const y = (yType === 'categorical'
-              ? point()
-                  .domain(data.map(yValue))
-                  .padding(0.3)
-              : linear$1().domain(extent(data, yValue))
-          ).range([height - margin.bottom, margin.top]);
-
+          const x = computeScale(xType, data, xValue).range([margin.left, width - margin.right]);
+          const y = computeScale(yType, data, yValue).range([height - margin.bottom, margin.top]);
 
           const marks = data
               .filter((d) =>

@@ -25,46 +25,36 @@ export const scatterPlot = () => {
     let radius;
 
 
-    /*
-    const computeScale = (type, data, value, axRange) => {
+
+    const computeScale = (type, data, value) => {
         let scale;
 
         switch (type) {
             case 'categorical':
                 scale = scalePoint()
                     .domain(data.map(value))
-                    .padding(0.2).range(axRange);
+                    .padding(0.2);
                 break;
             case 'time':
                 scale = scaleTime().domain(
                     extend(data, value)
-                ).range(axRange);
+                );
                 break;
             case 'quantitative':
             default:
                 scale = scaleLinear().domain(
                     extent(data, value)
-                ).range(axRange);
-                return scale;
+                );
+                break;
         }
+        return scale;
+
     };
-*/
-    const my = (selection) => {
 
-        const x = (xType === 'categorical'
-            ? scalePoint()
-                .domain(data.map(xValue))
-                .padding(0.2)
-            : scaleLinear().domain(extent(data, xValue))
-        ).range([margin.left, width - margin.right]);
+    const my = (selection) => {      
 
-        const y = (yType === 'categorical'
-            ? scalePoint()
-                .domain(data.map(yValue))
-                .padding(0.3)
-            : scaleLinear().domain(extent(data, yValue))
-        ).range([height - margin.bottom, margin.top]);
-
+        const x = computeScale(xType, data, xValue).range([margin.left, width - margin.right]);
+        const y = computeScale(yType, data, yValue).range([height - margin.bottom, margin.top]);
 
         const marks = data
             .filter((d) =>
