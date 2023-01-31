@@ -6,7 +6,8 @@ import {
   max,
   select,
   selectAll,
-  timeFormat
+  timeFormat,
+  transition
 } from 'd3';
 
 export const timePlot = () => {
@@ -19,8 +20,14 @@ export const timePlot = () => {
   let ybValue;
   let yeValue;
   let yLabel;
+  let yChanged;
+  let yType;
   let value;
   let margin;
+
+
+
+
 
   const my = (selection) => {
     // date function
@@ -40,6 +47,8 @@ export const timePlot = () => {
       );
     }
 
+    const t = transition().duration(1000);
+
     const dateTimeFormat = timeFormat('%Y-%m-%d %H:%M:%S');
     const dateFormat = timeFormat('%Y-%m-%d');
 
@@ -50,17 +59,24 @@ export const timePlot = () => {
         : d.tijdstipRegistratie
     );
 
-    const tempyMax = max(data, (d) =>
+    const tempGeldigMax = max(data, (d) =>
       isValidDate(d.eindGeldigheid)
         ? d.eindGeldigheid
         : d.beginGeldigheid
+    );
+
+    const tempInWerkingMax = max(data, (d) =>
+      isValidDate(d.eindInwerking)
+        ? d.eindInwerking
+        : d.beginInwerking
     );
 
     // determine maximum values for the graph
     // for not yet defined eindregistratie/eindgeldigheid use temporary maximum and add 7 days
     const extraDays = 7;
     const xMax = addDate(tempxMax, extraDays);
-    const yMax = addDate(tempyMax, extraDays);
+    const yGeldigMax = addDate(tempGeldigMax, extraDays);
+    const yInwerkingMax = addDate(tempInWerkingMax, extraDays);
 
     // Generate temporary data set with adjusted maximum for eindregistratie/eindgeldighei
     const tmarks = data.map((d) => ({
@@ -69,7 +85,14 @@ export const timePlot = () => {
         d.eindGeldigheid
       )
         ? d.eindGeldigheid
-        : yMax,
+        : yGeldigMax,
+
+      beginInwerking: d.beginInwerking,
+      eindInwerking: isValidDate(
+        d.eindInwerking
+      )
+        ? d.eindInwerking
+        : yInwerkingMax,
       tijdstipRegistratie: d.tijdstipRegistratie,
       eindRegistratie: isValidDate(
         d.eindRegistratie
@@ -176,6 +199,29 @@ export const timePlot = () => {
       .on('mousemove', mousemove)
       .on('mouseleave', mouseleave);
 
+    // Y Axis
+
+    const yAxisLabel = selection
+      .selectAll('.y-label')
+      .data([null])
+      .join('text')
+      .attr('class', 'y-label')
+      .text(yLabel)
+      .attr('x', margin.left + 10)
+      .attr('y', margin.top * 2)
+      .attr('fill', 'grey')
+      .attr('opacity', 0.7)
+      .attr('text-anchor', 'start');
+
+    if (yChanged) {
+      yAxisLabel
+        .attr('y', 0)
+        .transition(t)
+        .attr('y', margin.top * 2);
+
+      yChanged = false;
+    }
+
     selection
       .append('g')
       .attr('class', 'y-axis')
@@ -187,6 +233,19 @@ export const timePlot = () => {
         .tickFormat(timeFormat('%Y-%m')));
 
     selection
+      .selectAll('text.y-axis-label')
+      .data([null]) // single element
+      .join('text')
+      .attr('class', 'y-axis-label')
+      .attr(
+        'transform',
+        `translate(30,${height / 2})rotate(-90)`)
+      .style('text-anchor', 'middle')
+      .text(yLabel)
+      ;
+
+    // X Axis
+    selection
       .append('g')
       .attr('class', 'x-axis')
       .attr(
@@ -196,7 +255,6 @@ export const timePlot = () => {
       .call(axisBottom(x)
         .tickFormat(timeFormat('%Y-%m'))
       )
-      
       .selectAll("text")
       .style("text-anchor", "end")
       .attr("dx", "-.8em")
@@ -213,17 +271,7 @@ export const timePlot = () => {
       .style('text-anchor', 'middle')
       .text(xLabel);
 
-    selection
-      .selectAll('text.y-axis-label')
-      .data([null]) // single element
-      .join('text')
-      .attr('class', 'y-axis-label')
-      .attr(
-        'transform',
-        `translate(30,${height / 2})rotate(-90)`)
-      .style('text-anchor', 'middle')
-      .text(yLabel)
-      ;
+
   };
 
   my.width = function (_) {
@@ -278,6 +326,18 @@ export const timePlot = () => {
     return arguments.length
       ? ((yLabel = _), my)
       : yLabel;
+  };
+
+  my.yChanged = function (_) {
+    return arguments.length
+      ? ((yChanged = _), my)
+      : yChanged;
+  };
+
+  my.yType = function (_) {
+    return arguments.length
+      ? ((yType = _), my)
+      : yType;
   };
 
   my.margin = function (_) {
