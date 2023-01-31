@@ -1,0 +1,26 @@
+body {
+  margin: 0;
+  overflow: hidden;
+}
+
+path {  
+  stroke-width: 0.25px;  
+}
+
+.gemeente{
+  stroke: white;
+  fill: grey;
+  z-index: 0;
+}
+
+.provincie{
+  stroke: rgb(245, 5, 5);
+  fill-opacity: 0;
+  z-index: 100;
+}
+
+.land{
+  stroke: rgb(57, 5, 245);
+  fill-opacity: 0;
+  z-index: 200;
+}
