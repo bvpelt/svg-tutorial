@@ -4294,7 +4294,7 @@
       eindRegistratie:  '2020-02-02T08:00:00',
       beginGeldigheid: '2020-01-01',
       eindGeldigheid: null,
-      beginInwerking: '2020-01-01',
+      beginInwerking: '2021-01-13',
       eindInwerking: null,
       value: 'versie 1',
     },
@@ -4304,8 +4304,8 @@
       eindRegistratie: null,
       beginGeldigheid: '2020-01-01',
       eindGeldigheid: '2020-02-01',
-      beginInwerking: '2021-01-01',
-      eindInwerking: '2021-02-01',
+      beginInwerking: '2021-01-13',
+      eindInwerking: '2021-02-13',
       value: 'versie 1',
     },
     {
@@ -4313,7 +4313,7 @@
       eindRegistratie: '2020-03-02T08:00:00',
       beginGeldigheid: '2020-02-01',
       eindGeldigheid: null,
-      beginInwerking: '2021-02-01',
+      beginInwerking: '2021-02-13',
       eindInwerking: null,
       value: 'versie 2',
     },
@@ -4323,7 +4323,7 @@
       eindRegistratie: null,
       beginGeldigheid: '2020-02-01',
       eindGeldigheid: '2020-03-01',
-      beginInwerking: '2021-02-01',
+      beginInwerking: '2021-02-13',
       eindInwerking: '2021-03-01',
       value: 'versie 2',
     },
@@ -4389,80 +4389,12 @@
     let margin;
 
     const my = (selection) => {
-      /*
-      // date function
-      // - check dates
-      // - addDate - for not yet ended periods
-      //
-      function isValidDate(d) {
-        return d instanceof Date && !isNaN(d);
-      }
 
-      function addDate(d, numberdays) {
-        let rtime = new Date(d);
-
-        return new Date(
-          rtime.getTime() +
-          numberdays * 24 * 60 * 60 * 1000
-        );
-      }
-  */
       const t = transition().duration(1000);
 
       const dateTimeFormat = timeFormat('%Y-%m-%d %H:%M:%S');
       const dateFormat = timeFormat('%Y-%m-%d');
 
-      /*
-      // determine maximum values for registrie/geldigheid of dataset
-      const tempxMax = max(data, (d) =>
-        isValidDate(d.eindRegistratie)
-          ? d.eindRegistratie
-          : d.tijdstipRegistratie
-      );
-
-      const tempGeldigMax = max(data, (d) =>
-        isValidDate(d.eindGeldigheid)
-          ? d.eindGeldigheid
-          : d.beginGeldigheid
-      );
-
-      const tempInWerkingMax = max(data, (d) =>
-        isValidDate(d.eindInwerking)
-          ? d.eindInwerking
-          : d.beginInwerking
-      );
-
-      // determine maximum values for the graph
-      // for not yet defined eindregistratie/eindgeldigheid use temporary maximum and add 7 days
-      const extraDays = 7;
-      const xMax = addDate(tempxMax, extraDays);
-      const yGeldigMax = addDate(tempGeldigMax, extraDays);
-      const yInwerkingMax = addDate(tempInWerkingMax, extraDays);
-
-      // Generate temporary data set with adjusted maximum for eindregistratie/eindgeldighei
-      const tmarks = data.map((d) => ({
-        beginGeldigheid: d.beginGeldigheid,
-        eindGeldigheid: isValidDate(
-          d.eindGeldigheid
-        )
-          ? d.eindGeldigheid
-          : yGeldigMax,
-
-        beginInwerking: d.beginInwerking,
-        eindInwerking: isValidDate(
-          d.eindInwerking
-        )
-          ? d.eindInwerking
-          : yInwerkingMax,
-        tijdstipRegistratie: d.tijdstipRegistratie,
-        eindRegistratie: isValidDate(
-          d.eindRegistratie
-        )
-          ? d.eindRegistratie
-          : xMax,
-        value: d.value,
-      }));
-  */
 
       // Define x/y scales
       const x = time()
@@ -4477,32 +4409,31 @@
           min(data, yStartValue),
           max(data, yEindValue),
         ])
-        .range([
-          height - margin.bottom,
-          margin.top,
-        ]);
-    /*
-      console.log('data');
-      console.log(data);
-      console.log('x');
-      console.log(x);
-      console.log('y');
-      console.log(y);
-    
-    // Generate dataset for visualisation
-    // especially calculate width/height of timeboxes
-    const marks = tmarks.map((d, i) => ({
-      x: x(xbValue(d)),
-      y: y(yeValue(d)),
-      tijdstipRegistratie: xbValue(d),
-      eindRegistratie: xeValue(d),
-      beginGeldigheid: ybValue(d),
-      eindGeldigheid: yeValue(d),
-      value: value(d),
-      width: x(xeValue(d)) - x(xbValue(d)),
-      height: y(ybValue(d)) - y(yeValue(d)),
-    }));
-  */
+        .range([height - margin.bottom, margin.top]);
+
+      console.log('min: ' + min(data, yStartValue) + ' max: ' + max(data, yEindValue));
+      /*
+        console.log('data');
+        console.log(data);
+        console.log('x');
+        console.log(x);
+        console.log('y');
+        console.log(y);
+      
+      // Generate dataset for visualisation
+      // especially calculate width/height of timeboxes
+      const marks = tmarks.map((d, i) => ({
+        x: x(xbValue(d)),
+        y: y(yeValue(d)),
+        tijdstipRegistratie: xbValue(d),
+        eindRegistratie: xeValue(d),
+        beginGeldigheid: ybValue(d),
+        eindGeldigheid: yeValue(d),
+        value: value(d),
+        width: x(xeValue(d)) - x(xbValue(d)),
+        height: y(ybValue(d)) - y(yeValue(d)),
+      }));
+    */
       // create a tooltip
       // ref https://d3-graph-gallery.com/graph/interactivity_tooltip.html#mostbasic
       // https://stackoverflow.com/questions/65134858/d3-mouse-is-not-a-function
@@ -4567,33 +4498,34 @@
       };
 
       const deltaY = (d) => {
-        return  y(yStartValue(d)) - y(yEindValue(d));
+        return y(yStartValue(d)) - y(yEindValue(d));
       };
 
       const positionRects = (rects) => {
-        // console.log('position rects rect x: ' + x(xStartValue(d)) + ' y: ' + y(yStartValue(d)));
-        //console.log('position rects rects: ' + rects.d);
         rects
           .attr('x', (d) => x(xStartValue(d)))
-          .attr('y', (d) => y(yStartValue(d)));
+          .attr('y', (d) => y(yEindValue(d)));
       };
 
       const initializeRects = (rects) => {
-        rects.attr('width', 1)
+        rects
+          .attr('width', 1)
           .attr('height', 1);
       };
 
-      const growRects = (enter) => {
-  //      console.log('growrects rects rect width: ' + deltaX(d) + ' height: ' + deltaY(d));
-        enter.transition(t)
+      const growRects = (rects) => {
+        rects.transition(t)
           .attr('width', (d) => deltaX(d))
           .attr('height', (d) => deltaY(d));
       };
 
-      const shrinkRects = (enter) => {
-        enter.transition(t)
+      const shrinkRects = (rects) => {
+        rects.transition(t)
           .attr('width', 1)
           .attr('height', 1)
+          .on('mouseover', null)
+          .on('mousemove', null)
+          .on('mouseleave', null)
           .remove();
       };
 
@@ -4606,40 +4538,42 @@
       let dx = deltaX(data[0]);
       let dy = deltaY(data[0]);
       console.log ('dx: ' + dx + ' dy: ' + dy);
-      console.log('x: ' + x(xStartValue(data[0])) + ' y: ' + y(yStartValue(data[0])) + ' width: ' + deltaX(data[0]) + ' height: ' + deltaY(data[0]));
+      console.log('x: ' + x(xStartValue(data[0])) + ' y: ' + y(yStartValue(data[0])) + ' width: ' + deltaX(data[0]) + ' height: ' + deltaY(data[0]));    
+    
 
       const rects = selection
         .selectAll('rect')
         .data(data)
         .join('rect')
         .attr('x', (d) => x(xStartValue(d)))
-        .attr('y', (d) => y(yStartValue(d)))
-        .attr('width', (d) => x(xEindValue(d)) - x(xStartValue(d)))
-        .attr('height', (d) => y(yStartValue(d)) - y(yEindValue(d)))
+        .attr('y', (d) => y(yEindValue(d)))
+        .attr('width', (d) => deltaX(d))
+        .attr('height', (d) => deltaY(d))
         .on('mouseover', mouseover)
         .on('mousemove', mousemove)
         .on('mouseleave', mouseleave);
-  */
 
+        */
 
       const rects = selection
         .selectAll('rect')
         .data(data)
         .join(
-          (enter) => {
-            enter.append('rect')
+          (enter) =>
+            enter
+              .append('rect')
               .call(positionRects)
               .call(initializeRects)
-              .call(growRects);
-
-          },
+              .call(growRects),
           (update) =>
-            update.call((update) =>
-              update
-                .transition(t)
-                .delay((d, i) => i * 10)
-                .call(positionRects)
-            ),
+            update
+              .call((update) =>
+                update
+                  .transition(t)
+                  .delay((d, i) => i * 10)
+                  .call(positionRects)
+                  .call(growRects)
+              ),
           (exit) => exit.call(shrinkRects)
         )
         .on('mouseover', mouseover)
@@ -4806,18 +4740,6 @@
       return arguments.length
         ? ((margin = _), my)
         : margin;
-    };
-
-    my.xWidth = function (_) {
-      return arguments.length
-        ? ((xWidth = _), my)
-        : xWidth;
-    };
-
-    my.yHeight = function (_) {
-      return arguments.length
-        ? ((yHeight = _), my)
-        : yHeight;
     };
 
     my.value = function (_) {
@@ -4992,6 +4914,7 @@
 
     const processedTimeTable = dataProcessing(timeTable);
 
+    console.log(processedTimeTable);
     const options = [
       {
         value: 'geldigheid',

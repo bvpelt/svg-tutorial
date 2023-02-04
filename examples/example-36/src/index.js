@@ -22,6 +22,7 @@ const drawData = async () => {
 
   const processedTimeTable = dataProcessing(timeTable);
 
+  console.log(processedTimeTable);
   const options = [
     {
       value: 'geldigheid',
