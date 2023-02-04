@@ -1332,6 +1332,12 @@
         : new Selection([[selector]], root);
   }
 
+  function selectAll(selector) {
+    return typeof selector === "string"
+        ? new Selection([document.querySelectorAll(selector)], [document.documentElement])
+        : new Selection([array(selector)], root);
+  }
+
   function define(constructor, factory, prototype) {
     constructor.prototype = factory.prototype = prototype;
     prototype.constructor = constructor;
@@ -4388,6 +4394,21 @@
     let value;
     let margin;
 
+
+    var tooltip = selectAll('#timeplot')
+        .data([null])
+        .append('div')
+        .style('opacity', 0)
+        .attr('class', 'tooltip')
+        .style('background-color', 'white')
+        .style('border', 'solid')
+        .style('position', 'absolute')
+        .style('border-width', '2px')
+        .style('border-radius', '5px')
+        .style('padding', '5px')
+        .style('z-index', '100');
+
+
     const my = (selection) => {
 
       const t = transition().duration(1000);
@@ -4411,45 +4432,12 @@
         ])
         .range([height - margin.bottom, margin.top]);
 
-      console.log('min: ' + min(data, yStartValue) + ' max: ' + max(data, yEindValue));
-      /*
-        console.log('data');
-        console.log(data);
-        console.log('x');
-        console.log(x);
-        console.log('y');
-        console.log(y);
-      
-      // Generate dataset for visualisation
-      // especially calculate width/height of timeboxes
-      const marks = tmarks.map((d, i) => ({
-        x: x(xbValue(d)),
-        y: y(yeValue(d)),
-        tijdstipRegistratie: xbValue(d),
-        eindRegistratie: xeValue(d),
-        beginGeldigheid: ybValue(d),
-        eindGeldigheid: yeValue(d),
-        value: value(d),
-        width: x(xeValue(d)) - x(xbValue(d)),
-        height: y(ybValue(d)) - y(yeValue(d)),
-      }));
-    */
       // create a tooltip
       // ref https://d3-graph-gallery.com/graph/interactivity_tooltip.html#mostbasic
       // https://stackoverflow.com/questions/65134858/d3-mouse-is-not-a-function
       //
-      var tooltip = select('#timeplot')
-        .append('div')
-        .style('opacity', 0)
-        .attr('class', 'tooltip')
-        .style('background-color', 'white')
-        .style('border', 'solid')
-        .style('position', 'absolute')
-        .style('border-width', '2px')
-        .style('border-radius', '5px')
-        .style('padding', '5px')
-        .style('z-index', '100');
-
+      
+      // mouse event handlers for the tooltips
       let mouseover = function (event, d) {
         tooltip.style('opacity', 1);
         select(this)
@@ -4523,37 +4511,12 @@
         rects.transition(t)
           .attr('width', 1)
           .attr('height', 1)
+          // reset mouse handlers
           .on('mouseover', null)
           .on('mousemove', null)
           .on('mouseleave', null)
           .remove();
       };
-
-      /*
-      console.log('before rects selection data: ')
-      console.log(data);
-
-      console.log('record 1');
-      console.log(data[0]);
-      let dx = deltaX(data[0]);
-      let dy = deltaY(data[0]);
-      console.log ('dx: ' + dx + ' dy: ' + dy);
-      console.log('x: ' + x(xStartValue(data[0])) + ' y: ' + y(yStartValue(data[0])) + ' width: ' + deltaX(data[0]) + ' height: ' + deltaY(data[0]));    
-    
-
-      const rects = selection
-        .selectAll('rect')
-        .data(data)
-        .join('rect')
-        .attr('x', (d) => x(xStartValue(d)))
-        .attr('y', (d) => y(yEindValue(d)))
-        .attr('width', (d) => deltaX(d))
-        .attr('height', (d) => deltaY(d))
-        .on('mouseover', mouseover)
-        .on('mousemove', mousemove)
-        .on('mouseleave', mouseleave);
-
-        */
 
       const rects = selection
         .selectAll('rect')
@@ -4577,44 +4540,10 @@
           (exit) => exit.call(shrinkRects)
         )
         .on('mouseover', mouseover)
-        .on('mousemove', mousemove)
+        .on('mousemove', mousemove)      
         .on('mouseleave', mouseleave);
 
-      // Y Axis
-      /*
-          const yAxisLabel = selection
-            .selectAll('.y-label')
-            .data([null])
-            .join('text')
-            .attr('class', 'y-label')
-            .text(yLabel)
-            .attr('x', margin.left + 10)
-            .attr('y', margin.top * 2)
-            .attr('fill', 'grey')
-            .attr('opacity', 0.7)
-            .attr('text-anchor', 'start');
-      
-          if (yChanged) {
-            yAxisLabel
-              .attr('y', 0)
-              .transition(t)
-              .attr('y', margin.top * 2);
-      
-            yChanged = false;
-          }
-      
-          selection
-            .append('g')
-            .attr('class', 'y-axis')
-            .attr(
-              'transform',
-              `translate(${margin.left},0)`
-            )
-            .call(axisLeft(y)
-              .tickFormat(timeFormat('%Y-%m')));
-      
-      */
-
+      // Y Axis    
       selection
         .selectAll('.y-axis')
         .data([null])
@@ -4625,7 +4554,9 @@
           `translate(${margin.left},0)`
         )
         .transition(t)
-        .call(axisLeft(y).tickFormat(timeFormat('%Y-%m')));
+        .call(axisLeft(y)
+          .tickFormat(timeFormat('%Y-%m-%d'))
+          .tickValues(data.map(function (d) { return new Date(yStartValue(d)) })));
 
       selection
         .selectAll('text.y-axis-label')
@@ -4649,13 +4580,13 @@
           `translate(0, ${height - margin.bottom})`
         )
         .call(axisBottom(x)
-          .tickFormat(timeFormat('%Y-%m'))
-        )
+          .tickFormat(timeFormat('%Y-%m-%d'))
+          .tickValues(data.map(function (d) { return new Date(xStartValue(d)) })))
         .selectAll("text")
         .style("text-anchor", "end")
         .attr("dx", "-.8em")
         .attr("dy", ".15em")
-        .attr("transform", "rotate(-90)");
+        .attr("transform", `translate(3, 140)rotate(90)`);
 
       selection
         .selectAll('text.x-axis-label')
@@ -4666,8 +4597,6 @@
         .attr('y', `${height - 10}`)
         .style('text-anchor', 'middle')
         .text(xLabel);
-
-
     };
 
     my.width = function (_) {
@@ -4914,7 +4843,6 @@
 
     const processedTimeTable = dataProcessing(timeTable);
 
-    console.log(processedTimeTable);
     const options = [
       {
         value: 'geldigheid',
@@ -4945,7 +4873,6 @@
       .xStartValue((d) => d.tijdstipRegistratie)
       .xEindValue((d) => d.eindRegistratie)
       .xLabel('Registratie')
-
       .yStartValue((d) => d.beginGeldigheid)
       .yEindValue((d) => d.eindGeldigheid)
       .yLabel('Geldigheid')

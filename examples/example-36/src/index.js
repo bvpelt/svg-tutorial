@@ -22,7 +22,6 @@ const drawData = async () => {
 
   const processedTimeTable = dataProcessing(timeTable);
 
-  console.log(processedTimeTable);
   const options = [
     {
       value: 'geldigheid',
@@ -53,7 +52,6 @@ const drawData = async () => {
     .xStartValue((d) => d.tijdstipRegistratie)
     .xEindValue((d) => d.eindRegistratie)
     .xLabel('Registratie')
-
     .yStartValue((d) => d.beginGeldigheid)
     .yEindValue((d) => d.eindGeldigheid)
     .yLabel('Geldigheid')
