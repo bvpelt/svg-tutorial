@@ -4377,22 +4377,19 @@
     let width;
     let height;
     let data;
-    let xbValue;
-    let xeValue;
+    let xStartValue;
+    let xEindValue;
     let xLabel;
-    let ybValue;
-    let yeValue;
+    let yStartValue;
+    let yEindValue;
     let yLabel;
     let yChanged;
     let yType;
     let value;
     let margin;
 
-
-
-
-
     const my = (selection) => {
+      /*
       // date function
       // - check dates
       // - addDate - for not yet ended periods
@@ -4409,12 +4406,13 @@
           numberdays * 24 * 60 * 60 * 1000
         );
       }
-
+  */
       const t = transition().duration(1000);
 
       const dateTimeFormat = timeFormat('%Y-%m-%d %H:%M:%S');
       const dateFormat = timeFormat('%Y-%m-%d');
 
+      /*
       // determine maximum values for registrie/geldigheid of dataset
       const tempxMax = max(data, (d) =>
         isValidDate(d.eindRegistratie)
@@ -4464,39 +4462,47 @@
           : xMax,
         value: d.value,
       }));
+  */
 
       // Define x/y scales
       const x = time()
         .domain([
-          min(tmarks, xbValue),
-          max(tmarks, xeValue),
+          min(data, xStartValue),
+          max(data, xEindValue),
         ])
         .range([margin.left, width - margin.right]);
 
       const y = time()
         .domain([
-          min(tmarks, ybValue),
-          max(tmarks, yeValue),
+          min(data, yStartValue),
+          max(data, yEindValue),
         ])
         .range([
           height - margin.bottom,
           margin.top,
         ]);
-
-      // Generate dataset for visualisation
-      // especially calculate width/height of timeboxes
-      const marks = tmarks.map((d, i) => ({
-        x: x(xbValue(d)),
-        y: y(yeValue(d)),
-        tijdstipRegistratie: xbValue(d),
-        eindRegistratie: xeValue(d),
-        beginGeldigheid: ybValue(d),
-        eindGeldigheid: yeValue(d),
-        value: value(d),
-        width: x(xeValue(d)) - x(xbValue(d)),
-        height: y(ybValue(d)) - y(yeValue(d)),
-      }));
-
+    /*
+      console.log('data');
+      console.log(data);
+      console.log('x');
+      console.log(x);
+      console.log('y');
+      console.log(y);
+    
+    // Generate dataset for visualisation
+    // especially calculate width/height of timeboxes
+    const marks = tmarks.map((d, i) => ({
+      x: x(xbValue(d)),
+      y: y(yeValue(d)),
+      tijdstipRegistratie: xbValue(d),
+      eindRegistratie: xeValue(d),
+      beginGeldigheid: ybValue(d),
+      eindGeldigheid: yeValue(d),
+      value: value(d),
+      width: x(xeValue(d)) - x(xbValue(d)),
+      height: y(ybValue(d)) - y(yeValue(d)),
+    }));
+  */
       // create a tooltip
       // ref https://d3-graph-gallery.com/graph/interactivity_tooltip.html#mostbasic
       // https://stackoverflow.com/questions/65134858/d3-mouse-is-not-a-function
@@ -4536,7 +4542,13 @@
             dateFormat(d.beginGeldigheid) +
             '<br/>' +
             ' eindgeld: ' +
-            dateFormat(d.eindGeldigheid)
+            dateFormat(d.eindGeldigheid) +
+            '<br/>' +
+            ' begininwerk: ' +
+            dateFormat(d.beginInwerking) +
+            '<br/>' +
+            ' eindinwerk: ' +
+            dateFormat(d.eindInwerking)
           )
           .style('left', event.pageX + 5 + 'px')
           .style('top', event.pageY + 5 + 'px');
@@ -4550,50 +4562,136 @@
       };
 
       // Draw the graph
-      selection
+      const deltaX = (d) => {
+        return x(xEindValue(d)) - x(xStartValue(d));
+      };
+
+      const deltaY = (d) => {
+        return  y(yStartValue(d)) - y(yEindValue(d));
+      };
+
+      const positionRects = (rects) => {
+        // console.log('position rects rect x: ' + x(xStartValue(d)) + ' y: ' + y(yStartValue(d)));
+        //console.log('position rects rects: ' + rects.d);
+        rects
+          .attr('x', (d) => x(xStartValue(d)))
+          .attr('y', (d) => y(yStartValue(d)));
+      };
+
+      const initializeRects = (rects) => {
+        rects.attr('width', 1)
+          .attr('height', 1);
+      };
+
+      const growRects = (enter) => {
+  //      console.log('growrects rects rect width: ' + deltaX(d) + ' height: ' + deltaY(d));
+        enter.transition(t)
+          .attr('width', (d) => deltaX(d))
+          .attr('height', (d) => deltaY(d));
+      };
+
+      const shrinkRects = (enter) => {
+        enter.transition(t)
+          .attr('width', 1)
+          .attr('height', 1)
+          .remove();
+      };
+
+      /*
+      console.log('before rects selection data: ')
+      console.log(data);
+
+      console.log('record 1');
+      console.log(data[0]);
+      let dx = deltaX(data[0]);
+      let dy = deltaY(data[0]);
+      console.log ('dx: ' + dx + ' dy: ' + dy);
+      console.log('x: ' + x(xStartValue(data[0])) + ' y: ' + y(yStartValue(data[0])) + ' width: ' + deltaX(data[0]) + ' height: ' + deltaY(data[0]));
+
+      const rects = selection
         .selectAll('rect')
-        .data(marks)
+        .data(data)
         .join('rect')
-        .attr('x', (d) => d.x)
-        .attr('y', (d) => d.y)
-        .attr('width', (d) => d.width)
-        .attr('height', (d) => d.height)
+        .attr('x', (d) => x(xStartValue(d)))
+        .attr('y', (d) => y(yStartValue(d)))
+        .attr('width', (d) => x(xEindValue(d)) - x(xStartValue(d)))
+        .attr('height', (d) => y(yStartValue(d)) - y(yEindValue(d)))
+        .on('mouseover', mouseover)
+        .on('mousemove', mousemove)
+        .on('mouseleave', mouseleave);
+  */
+
+
+      const rects = selection
+        .selectAll('rect')
+        .data(data)
+        .join(
+          (enter) => {
+            enter.append('rect')
+              .call(positionRects)
+              .call(initializeRects)
+              .call(growRects);
+
+          },
+          (update) =>
+            update.call((update) =>
+              update
+                .transition(t)
+                .delay((d, i) => i * 10)
+                .call(positionRects)
+            ),
+          (exit) => exit.call(shrinkRects)
+        )
         .on('mouseover', mouseover)
         .on('mousemove', mousemove)
         .on('mouseleave', mouseleave);
 
       // Y Axis
-
-      const yAxisLabel = selection
-        .selectAll('.y-label')
-        .data([null])
-        .join('text')
-        .attr('class', 'y-label')
-        .text(yLabel)
-        .attr('x', margin.left + 10)
-        .attr('y', margin.top * 2)
-        .attr('fill', 'grey')
-        .attr('opacity', 0.7)
-        .attr('text-anchor', 'start');
-
-      if (yChanged) {
-        yAxisLabel
-          .attr('y', 0)
-          .transition(t)
-          .attr('y', margin.top * 2);
-
-        yChanged = false;
-      }
+      /*
+          const yAxisLabel = selection
+            .selectAll('.y-label')
+            .data([null])
+            .join('text')
+            .attr('class', 'y-label')
+            .text(yLabel)
+            .attr('x', margin.left + 10)
+            .attr('y', margin.top * 2)
+            .attr('fill', 'grey')
+            .attr('opacity', 0.7)
+            .attr('text-anchor', 'start');
+      
+          if (yChanged) {
+            yAxisLabel
+              .attr('y', 0)
+              .transition(t)
+              .attr('y', margin.top * 2);
+      
+            yChanged = false;
+          }
+      
+          selection
+            .append('g')
+            .attr('class', 'y-axis')
+            .attr(
+              'transform',
+              `translate(${margin.left},0)`
+            )
+            .call(axisLeft(y)
+              .tickFormat(timeFormat('%Y-%m')));
+      
+      */
 
       selection
-        .append('g')
+        .selectAll('.y-axis')
+        .data([null])
+        .join('g')
         .attr('class', 'y-axis')
         .attr(
           'transform',
           `translate(${margin.left},0)`
         )
-        .call(axisLeft(y)
-          .tickFormat(timeFormat('%Y-%m')));
+        .transition(t)
+        .call(axisLeft(y).tickFormat(timeFormat('%Y-%m')));
 
       selection
         .selectAll('text.y-axis-label')
@@ -4604,6 +4702,7 @@
           'transform',
           `translate(30,${height / 2})rotate(-90)`)
         .style('text-anchor', 'middle')
+        .transition(t)
         .text(yLabel)
         ;
 
@@ -4655,16 +4754,16 @@
         : data;
     };
 
-    my.xbValue = function (_) {
+    my.xStartValue = function (_) {
       return arguments.length
-        ? ((xbValue = _), my)
-        : xbValue;
+        ? ((xStartValue = _), my)
+        : xStartValue;
     };
 
-    my.xeValue = function (_) {
+    my.xEindValue = function (_) {
       return arguments.length
-        ? ((xeValue = _), my)
-        : xeValue;
+        ? ((xEindValue = _), my)
+        : xEindValue;
     };
 
     my.xLabel = function (_) {
@@ -4673,16 +4772,16 @@
         : xLabel;
     };
 
-    my.ybValue = function (_) {
+    my.yStartValue = function (_) {
       return arguments.length
-        ? ((ybValue = _), my)
-        : ybValue;
+        ? ((yStartValue = _), my)
+        : yStartValue;
     };
 
-    my.yeValue = function (_) {
+    my.yEindValue = function (_) {
       return arguments.length
-        ? ((yeValue = _), my)
-        : yeValue;
+        ? ((yEindValue = _), my)
+        : yEindValue;
     };
 
     my.yLabel = function (_) {
@@ -4750,14 +4849,21 @@
         .join('select')
         .attr('id', id)
         .on('change', (event) => {
-          listeners.call('change', null, [
+          console.log('change');
+          console.log(event.target.value);
+          listeners.call('change', null, 
+          /*
+          [
             // Label Text
             event.target.options[
               event.target.selectedIndex
             ].text,
             // Variable name
             event.target.value,
-          ]);
+          ]
+          */
+          event.target.value
+          );
         })
         .selectAll('option')
         .data(options)
@@ -4793,6 +4899,81 @@
     return my;
   };
 
+  // date function
+  // - check dates
+  // - addDate - for not yet ended periods
+  //
+
+  function isValidDate(d) {
+      return d instanceof Date && !isNaN(d);
+  }
+
+  function addDate(d, numberdays) {
+      let rtime = new Date(d);
+
+      return new Date(
+          rtime.getTime() +
+          numberdays * 24 * 60 * 60 * 1000
+      );
+  }
+
+  function dataProcessing(data) {
+
+      // determine maximum values for the graph
+      // for not yet defined eindregistratie/eindgeldigheid use temporary maximum and add 7 days
+      const extraDays = 7;
+
+      // determine maximum values for registrie/geldigheid of dataset
+      const tempxMax = max(data, (d) =>
+          isValidDate(d.eindRegistratie)
+              ? d.eindRegistratie
+              : d.tijdstipRegistratie
+      );
+
+      const tempGeldigMax = max(data, (d) =>
+          isValidDate(d.eindGeldigheid)
+              ? d.eindGeldigheid
+              : d.beginGeldigheid
+      );
+
+      const tempInWerkingMax = max(data, (d) =>
+          isValidDate(d.eindInwerking)
+              ? d.eindInwerking
+              : d.beginInwerking
+      );
+
+      // determine maximum values for the graph
+      // for not yet defined eindregistratie/eindgeldigheid use temporary maximum and add 7 days    
+      const xMax = addDate(tempxMax, extraDays);
+      const GeldigMax = addDate(tempGeldigMax, extraDays);
+      const InwerkingMax = addDate(tempInWerkingMax, extraDays);
+
+      const marks = data.map((d) => ({
+          beginGeldigheid: d.beginGeldigheid,
+          eindGeldigheid: isValidDate(
+              d.eindGeldigheid
+          )
+              ? d.eindGeldigheid
+              : GeldigMax,
+
+          beginInwerking: d.beginInwerking,
+          eindInwerking: isValidDate(
+              d.eindInwerking
+          )
+              ? d.eindInwerking
+              : InwerkingMax,
+          tijdstipRegistratie: d.tijdstipRegistratie,
+          eindRegistratie: isValidDate(
+              d.eindRegistratie
+          )
+              ? d.eindRegistratie
+              : xMax,
+          value: d.value,
+      }));
+
+      return marks;
+  }
+
   const width = window.innerWidth;
   const height = window.innerHeight;
 
@@ -4807,45 +4988,19 @@
 
   const yMenu = menuContainer.append('div');
 
-
-
-  /*
-  const drawGraph = async () => {
-    svg.call(
-      timePlot()
-        .width(width)
-        .height(height)
-        .data(timeTable)
-        .xbValue((d) => d.tijdstipRegistratie)
-        .xeValue((d) => d.eindRegistratie)
-        .xLabel('Registratie ->')
-        .ybValue((d) => d.beginGeldigheid)
-        .yeValue((d) => d.eindGeldigheid)
-        .yLabel('Geldigheid ->')
-        .value((d) => d.value)
-        .margin({
-          top: 20,
-          right: 20,
-          bottom: 150,
-          left: 140,
-        })
-    );
-  };
-
-  drawGraph();
-  */
-
   const drawData = async () => {
+
+    const processedTimeTable = dataProcessing(timeTable);
 
     const options = [
       {
         value: 'geldigheid',
-        text: 'Geldigheid ->',
+        text: 'Geldigheid',
         type: 'time',
       },
       {
         value: 'inwerking',
-        text: 'InWerking ->',
+        text: 'InWerking',
         type: 'time',
       },
     ];
@@ -4860,20 +5015,20 @@
     const getType = (column) =>
       columnToType.get(column);
 
-    const plot = timePlot()
+      const plot = timePlot()
       .width(width)
       .height(height)
-      .data(timeTable)
-      .xbValue((d) => d.tijdstipRegistratie)
-      .xeValue((d) => d.eindRegistratie)
-      .xLabel('Registratie ->')
+      .data(processedTimeTable)
+      .xStartValue((d) => d.tijdstipRegistratie)
+      .xEindValue((d) => d.eindRegistratie)
+      .xLabel('Registratie')
 
-      .ybValue((d) => d.beginGeldigheid)
-      .yeValue((d) => d.eindGeldigheid)
-      .yLabel('Geldigheid ->')
+      .yStartValue((d) => d.beginGeldigheid)
+      .yEindValue((d) => d.eindGeldigheid)
+      .yLabel('Geldigheid')
       .value((d) => d.value)
       .margin({
-        top: 20,
+        top: 50,
         right: 20,
         bottom: 150,
         left: 140,
@@ -4886,20 +5041,13 @@
         .id('y-menu')
         .labelText('Y:')
         .options(options)
-        .on('change', (column) => {
-          //console.log(column);
-          const varName = column[1];
-          const labelName = column[0];
-
+        .on('change', (yaxis) => {
           plot
-  //          .yValue((d) => d[varName])
-
-            .ybValue((d) => d.beginGeldigheid)
-            .yeValue((d) => d.eindGeldigheid)
-
-            .yLabel(labelName)
+            .yStartValue(((yaxis === 'geldigheid') ? (d) => d.beginGeldigheid : (d) => d.beginInwerking))
+            .yEindValue(((yaxis === 'geldigheid') ? (d) => d.eindGeldigheid : (d) => d.eindInwerking))
+            .yLabel(yaxis)
             .yChanged(true)
-            .yType(getType(varName));
+            .yType(getType(yaxis));
           svg.call(plot);
         })
     );

@@ -14,22 +14,19 @@ export const timePlot = () => {
   let width;
   let height;
   let data;
-  let xbValue;
-  let xeValue;
+  let xStartValue;
+  let xEindValue;
   let xLabel;
-  let ybValue;
-  let yeValue;
+  let yStartValue;
+  let yEindValue;
   let yLabel;
   let yChanged;
   let yType;
   let value;
   let margin;
 
-
-
-
-
   const my = (selection) => {
+    /*
     // date function
     // - check dates
     // - addDate - for not yet ended periods
@@ -46,12 +43,13 @@ export const timePlot = () => {
         numberdays * 24 * 60 * 60 * 1000
       );
     }
-
+*/
     const t = transition().duration(1000);
 
     const dateTimeFormat = timeFormat('%Y-%m-%d %H:%M:%S');
     const dateFormat = timeFormat('%Y-%m-%d');
 
+    /*
     // determine maximum values for registrie/geldigheid of dataset
     const tempxMax = max(data, (d) =>
       isValidDate(d.eindRegistratie)
@@ -101,39 +99,47 @@ export const timePlot = () => {
         : xMax,
       value: d.value,
     }));
+*/
 
     // Define x/y scales
     const x = scaleTime()
       .domain([
-        min(tmarks, xbValue),
-        max(tmarks, xeValue),
+        min(data, xStartValue),
+        max(data, xEindValue),
       ])
       .range([margin.left, width - margin.right]);
 
     const y = scaleTime()
       .domain([
-        min(tmarks, ybValue),
-        max(tmarks, yeValue),
+        min(data, yStartValue),
+        max(data, yEindValue),
       ])
       .range([
         height - margin.bottom,
         margin.top,
       ]);
-
-    // Generate dataset for visualisation
-    // especially calculate width/height of timeboxes
-    const marks = tmarks.map((d, i) => ({
-      x: x(xbValue(d)),
-      y: y(yeValue(d)),
-      tijdstipRegistratie: xbValue(d),
-      eindRegistratie: xeValue(d),
-      beginGeldigheid: ybValue(d),
-      eindGeldigheid: yeValue(d),
-      value: value(d),
-      width: x(xeValue(d)) - x(xbValue(d)),
-      height: y(ybValue(d)) - y(yeValue(d)),
-    }));
-
+  /*
+    console.log('data');
+    console.log(data);
+    console.log('x');
+    console.log(x);
+    console.log('y');
+    console.log(y);
+  
+  // Generate dataset for visualisation
+  // especially calculate width/height of timeboxes
+  const marks = tmarks.map((d, i) => ({
+    x: x(xbValue(d)),
+    y: y(yeValue(d)),
+    tijdstipRegistratie: xbValue(d),
+    eindRegistratie: xeValue(d),
+    beginGeldigheid: ybValue(d),
+    eindGeldigheid: yeValue(d),
+    value: value(d),
+    width: x(xeValue(d)) - x(xbValue(d)),
+    height: y(ybValue(d)) - y(yeValue(d)),
+  }));
+*/
     // create a tooltip
     // ref https://d3-graph-gallery.com/graph/interactivity_tooltip.html#mostbasic
     // https://stackoverflow.com/questions/65134858/d3-mouse-is-not-a-function
@@ -173,7 +179,13 @@ export const timePlot = () => {
           dateFormat(d.beginGeldigheid) +
           '<br/>' +
           ' eindgeld: ' +
-          dateFormat(d.eindGeldigheid)
+          dateFormat(d.eindGeldigheid) +
+          '<br/>' +
+          ' begininwerk: ' +
+          dateFormat(d.beginInwerking) +
+          '<br/>' +
+          ' eindinwerk: ' +
+          dateFormat(d.eindInwerking)
         )
         .style('left', event.pageX + 5 + 'px')
         .style('top', event.pageY + 5 + 'px');
@@ -187,50 +199,136 @@ export const timePlot = () => {
     };
 
     // Draw the graph
-    selection
+    const deltaX = (d) => {
+      return x(xEindValue(d)) - x(xStartValue(d));
+    }
+
+    const deltaY = (d) => {
+      return  y(yStartValue(d)) - y(yEindValue(d));
+    }
+
+    const positionRects = (rects) => {
+      // console.log('position rects rect x: ' + x(xStartValue(d)) + ' y: ' + y(yStartValue(d)));
+      //console.log('position rects rects: ' + rects.d);
+      rects
+        .attr('x', (d) => x(xStartValue(d)))
+        .attr('y', (d) => y(yStartValue(d)));
+    };
+
+    const initializeRects = (rects) => {
+      rects.attr('width', 1)
+        .attr('height', 1);
+    };
+
+    const growRects = (enter) => {
+//      console.log('growrects rects rect width: ' + deltaX(d) + ' height: ' + deltaY(d));
+      enter.transition(t)
+        .attr('width', (d) => deltaX(d))
+        .attr('height', (d) => deltaY(d));
+    };
+
+    const shrinkRects = (enter) => {
+      enter.transition(t)
+        .attr('width', 1)
+        .attr('height', 1)
+        .remove();
+    };
+
+    /*
+    console.log('before rects selection data: ')
+    console.log(data);
+
+    console.log('record 1');
+    console.log(data[0]);
+    let dx = deltaX(data[0]);
+    let dy = deltaY(data[0]);
+    console.log ('dx: ' + dx + ' dy: ' + dy);
+    console.log('x: ' + x(xStartValue(data[0])) + ' y: ' + y(yStartValue(data[0])) + ' width: ' + deltaX(data[0]) + ' height: ' + deltaY(data[0]));
+
+    const rects = selection
       .selectAll('rect')
-      .data(marks)
+      .data(data)
       .join('rect')
-      .attr('x', (d) => d.x)
-      .attr('y', (d) => d.y)
-      .attr('width', (d) => d.width)
-      .attr('height', (d) => d.height)
+      .attr('x', (d) => x(xStartValue(d)))
+      .attr('y', (d) => y(yStartValue(d)))
+      .attr('width', (d) => x(xEindValue(d)) - x(xStartValue(d)))
+      .attr('height', (d) => y(yStartValue(d)) - y(yEindValue(d)))
+      .on('mouseover', mouseover)
+      .on('mousemove', mousemove)
+      .on('mouseleave', mouseleave);
+*/
+
+
+    const rects = selection
+      .selectAll('rect')
+      .data(data)
+      .join(
+        (enter) => {
+          enter.append('rect')
+            .call(positionRects)
+            .call(initializeRects)
+            .call(growRects);
+
+        },
+        (update) =>
+          update.call((update) =>
+            update
+              .transition(t)
+              .delay((d, i) => i * 10)
+              .call(positionRects)
+          ),
+        (exit) => exit.call(shrinkRects)
+      )
       .on('mouseover', mouseover)
       .on('mousemove', mousemove)
       .on('mouseleave', mouseleave);
 
     // Y Axis
-
-    const yAxisLabel = selection
-      .selectAll('.y-label')
-      .data([null])
-      .join('text')
-      .attr('class', 'y-label')
-      .text(yLabel)
-      .attr('x', margin.left + 10)
-      .attr('y', margin.top * 2)
-      .attr('fill', 'grey')
-      .attr('opacity', 0.7)
-      .attr('text-anchor', 'start');
-
-    if (yChanged) {
-      yAxisLabel
-        .attr('y', 0)
-        .transition(t)
-        .attr('y', margin.top * 2);
-
-      yChanged = false;
-    }
+    /*
+        const yAxisLabel = selection
+          .selectAll('.y-label')
+          .data([null])
+          .join('text')
+          .attr('class', 'y-label')
+          .text(yLabel)
+          .attr('x', margin.left + 10)
+          .attr('y', margin.top * 2)
+          .attr('fill', 'grey')
+          .attr('opacity', 0.7)
+          .attr('text-anchor', 'start');
+    
+        if (yChanged) {
+          yAxisLabel
+            .attr('y', 0)
+            .transition(t)
+            .attr('y', margin.top * 2);
+    
+          yChanged = false;
+        }
+    
+        selection
+          .append('g')
+          .attr('class', 'y-axis')
+          .attr(
+            'transform',
+            `translate(${margin.left},0)`
+          )
+          .call(axisLeft(y)
+            .tickFormat(timeFormat('%Y-%m')));
+    
+    */
 
     selection
-      .append('g')
+      .selectAll('.y-axis')
+      .data([null])
+      .join('g')
       .attr('class', 'y-axis')
       .attr(
         'transform',
         `translate(${margin.left},0)`
       )
-      .call(axisLeft(y)
-        .tickFormat(timeFormat('%Y-%m')));
+      .transition(t)
+      .call(axisLeft(y).tickFormat(timeFormat('%Y-%m')));
 
     selection
       .selectAll('text.y-axis-label')
@@ -241,6 +339,7 @@ export const timePlot = () => {
         'transform',
         `translate(30,${height / 2})rotate(-90)`)
       .style('text-anchor', 'middle')
+      .transition(t)
       .text(yLabel)
       ;
 
@@ -292,16 +391,16 @@ export const timePlot = () => {
       : data;
   };
 
-  my.xbValue = function (_) {
+  my.xStartValue = function (_) {
     return arguments.length
-      ? ((xbValue = _), my)
-      : xbValue;
+      ? ((xStartValue = _), my)
+      : xStartValue;
   };
 
-  my.xeValue = function (_) {
+  my.xEindValue = function (_) {
     return arguments.length
-      ? ((xeValue = _), my)
-      : xeValue;
+      ? ((xEindValue = _), my)
+      : xEindValue;
   };
 
   my.xLabel = function (_) {
@@ -310,16 +409,16 @@ export const timePlot = () => {
       : xLabel;
   };
 
-  my.ybValue = function (_) {
+  my.yStartValue = function (_) {
     return arguments.length
-      ? ((ybValue = _), my)
-      : ybValue;
+      ? ((yStartValue = _), my)
+      : yStartValue;
   };
 
-  my.yeValue = function (_) {
+  my.yEindValue = function (_) {
     return arguments.length
-      ? ((yeValue = _), my)
-      : yeValue;
+      ? ((yEindValue = _), my)
+      : yEindValue;
   };
 
   my.yLabel = function (_) {
