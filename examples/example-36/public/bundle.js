@@ -4300,11 +4300,7 @@
       eindRegistratie:  '2020-02-02T08:00:00',
       beginGeldigheid: '2020-01-01',
       eindGeldigheid: null,
-<<<<<<< HEAD
-      beginInwerking: '2020-01-01',
-=======
       beginInwerking: '2021-01-13',
->>>>>>> inwerking
       eindInwerking: null,
       value: 'versie 1',
     },
@@ -4314,13 +4310,8 @@
       eindRegistratie: null,
       beginGeldigheid: '2020-01-01',
       eindGeldigheid: '2020-02-01',
-<<<<<<< HEAD
-      beginInwerking: '2021-01-01',
-      eindInwerking: '2021-02-01',
-=======
       beginInwerking: '2021-01-13',
       eindInwerking: '2021-02-13',
->>>>>>> inwerking
       value: 'versie 1',
     },
     {
@@ -4328,11 +4319,7 @@
       eindRegistratie: '2020-03-02T08:00:00',
       beginGeldigheid: '2020-02-01',
       eindGeldigheid: null,
-<<<<<<< HEAD
-      beginInwerking: '2021-02-01',
-=======
       beginInwerking: '2021-02-13',
->>>>>>> inwerking
       eindInwerking: null,
       value: 'versie 2',
     },
@@ -4342,11 +4329,7 @@
       eindRegistratie: null,
       beginGeldigheid: '2020-02-01',
       eindGeldigheid: '2020-03-01',
-<<<<<<< HEAD
-      beginInwerking: '2021-02-01',
-=======
       beginInwerking: '2021-02-13',
->>>>>>> inwerking
       eindInwerking: '2021-03-01',
       value: 'versie 2',
     },

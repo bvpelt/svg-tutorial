@@ -20,20 +20,8 @@ export const menu = () => {
       .join('select')
       .attr('id', id)
       .on('change', (event) => {
-        console.log('change');
-        console.log(event.target.value)
-        listeners.call('change', null, 
-        /*
-        [
-          // Label Text
-          event.target.options[
-            event.target.selectedIndex
-          ].text,
-          // Variable name
-          event.target.value,
-        ]
-        */
-        event.target.value
+        listeners.call('change', null,
+          event.target.value
         );
       })
       .selectAll('option')
