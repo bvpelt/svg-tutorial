@@ -26,17 +26,21 @@ function addDate(d, numberdays) {
 function fillColorXY(varMaxX, varMaxY, dataMaxX, dataMaxY) {
     var color = 'none';
 
+    const current = '#fcbbb2';
+    const borderactive = '#d3f5b5';
+    const inactive = '#b2f3fc'
+
     if (varMaxX.getTime() === dataMaxX.getTime()) {
         if (varMaxY.getTime() === dataMaxY.getTime()) {
-            color = 'cyan'
+            color = current
         } else {
-            color = 'green'
+            color = borderactive;
         }
     } else {
         if (varMaxY.getTime() === dataMaxY.getTime()) {
-            color = 'green'
+            color = borderactive;
         } else {
-            color = 'lightblue'
+            color = inactive;
         }
     }
     return color;
