@@ -110,3 +110,7 @@ examples/example-31/dataProcessingScripts/repositories
 examples/example-31/dataProcessingScripts/data
 examples/example-31/dataProcessingScripts/docs/aggregatedData.json
 examples/example-31/dataProcessingScripts/all-d3-commits.json
+
+bundle.js
+bundle.js.map
+
