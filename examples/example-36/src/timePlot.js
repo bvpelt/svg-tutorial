@@ -17,9 +17,12 @@ export const timePlot = () => {
   let xStartValue;
   let xEindValue;
   let xLabel;
+  let xMax;
   let yStartValue;
   let yEindValue;
   let yLabel;
+  let yMax;
+  let getColor;
   let yChanged;
   let yType;
   let value;
@@ -107,7 +110,7 @@ export const timePlot = () => {
     let mouseleave = function (event, d) {
       tooltip.style('opacity', 0);
       select(this)
-        .style('fill', 'none')
+        .style('fill', getColor(d))
         .style('opacity', 0.8);
     };
 
@@ -129,13 +132,16 @@ export const timePlot = () => {
     const initializeRects = (rects) => {
       rects
         .attr('width', 1)
-        .attr('height', 1);
+        .attr('height', 1)
+        .attr('fill', 'none');
     };
-
+    
+   
     const growRects = (rects) => {
       rects.transition(t)
         .attr('width', (d) => deltaX(d))
-        .attr('height', (d) => deltaY(d));
+        .attr('height', (d) => deltaY(d))
+        .attr('fill', (d) => getColor(d));
     };
 
     const shrinkRects = (rects) => {
@@ -266,6 +272,12 @@ export const timePlot = () => {
       : xLabel;
   };
 
+  my.xMax = function (_) {
+    return arguments.length
+      ? ((xMax = _), my)
+      : xMax;
+  };
+
   my.yStartValue = function (_) {
     return arguments.length
       ? ((yStartValue = _), my)
@@ -283,6 +295,19 @@ export const timePlot = () => {
       ? ((yLabel = _), my)
       : yLabel;
   };
+
+  my.yMax = function (_) {
+    return arguments.length
+      ? ((yMax = _), my)
+      : yMax;
+  };
+
+  my.getColor = function (_) {
+    return arguments.length
+      ? ((getColor = _), my)
+      : getColor;
+  };
+
 
   my.yChanged = function (_) {
     return arguments.length

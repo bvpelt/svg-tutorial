@@ -19,6 +19,36 @@ function addDate(d, numberdays) {
     );
 }
 
+//
+// for each possible graph registratie vs geldigheid or registratie vs inwerking
+// detemine for each timespace the color
+// 
+function fillColorXY(varMaxX, varMaxY, dataMaxX, dataMaxY) {
+    var color = 'none';
+
+    if (varMaxX.getTime() === dataMaxX.getTime()) {
+        if (varMaxY.getTime() === dataMaxY.getTime()) {
+            color = 'cyan'
+        } else {
+            color = 'green'
+        }
+    } else {
+        if (varMaxY.getTime() === dataMaxY.getTime()) {
+            color = 'green'
+        } else {
+            color = 'lightblue'
+        }
+    }
+    return color;
+}
+
+function fillColor(eindRegistratie, eindGeldigheid, eindInwerking, maxRegistratie, maxGeldigheid, maxInWerking) {
+    return {
+        geldigheidColor: fillColorXY(eindRegistratie, eindGeldigheid, maxRegistratie, maxGeldigheid),
+        inWerkingColor: fillColorXY(eindRegistratie, eindInwerking, maxRegistratie, maxInWerking),
+    };
+}
+
 export function dataProcessing(data) {
 
     // determine maximum values for the graph
@@ -50,6 +80,10 @@ export function dataProcessing(data) {
     const GeldigMax = addDate(tempGeldigMax, extraDays);
     const InwerkingMax = addDate(tempInWerkingMax, extraDays);
 
+    // 
+    // create dataset with sentinel for not ended date elements
+    // not ended means no eindGeldigheid, no eindInwerking or no eindRegistratie
+    //
     const marks = data.map((d) => ({
         beginGeldigheid: d.beginGeldigheid,
         eindGeldigheid: isValidDate(
@@ -73,6 +107,26 @@ export function dataProcessing(data) {
         value: d.value,
     }));
 
-    return marks;
+    const colorMarks = marks.map((d) => ({
+        beginGeldigheid: d.beginGeldigheid,
+        eindGeldigheid: d.eindGeldigheid,
+        beginInwerking: d.beginInwerking,
+        eindInwerking: d.eindInwerking,
+        tijdstipRegistratie: d.tijdstipRegistratie,
+        eindRegistratie: d.eindRegistratie,
+        value: d.value,
+        colors: fillColor(d.eindRegistratie, d.eindGeldigheid, d.eindInwerking, xMax, GeldigMax, InwerkingMax)
+    }));
+
+    const result = {
+        maxRegistratie: xMax,
+        maxGeldigheid: GeldigMax,
+        maxInwerking: InwerkingMax,
+        data: colorMarks,
+    }
+
+    console.log(result);
+
+    return result;
 };
 

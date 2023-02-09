@@ -8,17 +8,14 @@ svg {
 }
 
 rect {
-  fill: none;
   stroke: black;
   stroke-width: 2px;
 }
-
 
 text {
   font-size: 24px;
   font-family: Arial, Helvetica, sans-serif;
 }
-
 
 text,
 select,
@@ -34,9 +31,8 @@ option {
   left: 0;
   right: 0;
   display: flex;
-  justify-content: space-around; 
+  justify-content: space-around;
 }
-
 
 .y-label,
 .x-label {

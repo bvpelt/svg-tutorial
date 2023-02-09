@@ -45,16 +45,19 @@ const drawData = async () => {
   const getType = (column) =>
     columnToType.get(column);
 
-    const plot = timePlot()
+  const plot = timePlot()
     .width(width)
     .height(height)
-    .data(processedTimeTable)
+    .data(processedTimeTable.data)
     .xStartValue((d) => d.tijdstipRegistratie)
     .xEindValue((d) => d.eindRegistratie)
-    .xLabel('Registratie')
+    .xLabel('registratie')
+    .xMax(processedTimeTable.maxRegistratie)
     .yStartValue((d) => d.beginGeldigheid)
     .yEindValue((d) => d.eindGeldigheid)
-    .yLabel('Geldigheid')
+    .yLabel('geldigheid')
+    .yMax(processedTimeTable.maxGeldigheid)
+    .getColor((d) => d.colors.geldigheidColor)
     .value((d) => d.value)
     .margin({
       top: 50,
@@ -74,6 +77,8 @@ const drawData = async () => {
         plot
           .yStartValue(((yaxis === 'geldigheid') ? (d) => d.beginGeldigheid : (d) => d.beginInwerking))
           .yEindValue(((yaxis === 'geldigheid') ? (d) => d.eindGeldigheid : (d) => d.eindInwerking))
+          .yMax(((yaxis === 'geldigheid') ? processedTimeTable.maxGeldigheid : processedTimeTable.maxInwerking))
+          .getColor(((yaxis === 'geldigheid') ? (d) => d.colors.geldigheidColor : (d) => d.colors.inWerkingColor))
           .yLabel(yaxis)
           .yChanged(true)
           .yType(getType(yaxis));
