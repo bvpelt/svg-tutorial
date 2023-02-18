@@ -1,4 +1,4 @@
-import { max, select } from 'd3';
+import { select } from 'd3';
 import { timeTable } from './data';
 import { timePlot } from './timePlot';
 import { menu } from './menu';

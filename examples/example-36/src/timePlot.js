@@ -30,17 +30,17 @@ export const timePlot = () => {
 
 
   var tooltip = selectAll('#timeplot')
-      .data([null])
-      .append('div')
-      .style('opacity', 0)
-      .attr('class', 'tooltip')
-      .style('background-color', 'white')
-      .style('border', 'solid')
-      .style('position', 'absolute')
-      .style('border-width', '2px')
-      .style('border-radius', '5px')
-      .style('padding', '5px')
-      .style('z-index', '100');
+    .data([null])
+    .append('div')
+    .style('opacity', 0)
+    .attr('class', 'tooltip')
+    .style('background-color', 'white')
+    .style('border', 'solid')
+    .style('position', 'absolute')
+    .style('border-width', '2px')
+    .style('border-radius', '5px')
+    .style('padding', '5px')
+    .style('z-index', '100');
 
 
   const my = (selection) => {
@@ -70,7 +70,7 @@ export const timePlot = () => {
     // ref https://d3-graph-gallery.com/graph/interactivity_tooltip.html#mostbasic
     // https://stackoverflow.com/questions/65134858/d3-mouse-is-not-a-function
     //
-    
+
     // mouse event handlers for the tooltips
     let mouseover = function (event, d) {
       tooltip.style('opacity', 1);
@@ -126,22 +126,24 @@ export const timePlot = () => {
     const positionRects = (rects) => {
       rects
         .attr('x', (d) => x(xStartValue(d)))
-        .attr('y', (d) => y(yEindValue(d)));
+        .attr('y', (d) => y(yEindValue(d)))
+        .attr('fill', 'none')
+        ;
     };
 
     const initializeRects = (rects) => {
       rects
         .attr('width', 1)
         .attr('height', 1)
-        .attr('fill', 'none');
+        ;
     };
-    
-   
+
     const growRects = (rects) => {
       rects.transition(t)
         .attr('width', (d) => deltaX(d))
         .attr('height', (d) => deltaY(d))
-        .attr('fill', (d) => getColor(d));
+        .attr('fill', (d) => getColor(d))
+        ;
     };
 
     const shrinkRects = (rects) => {
@@ -170,14 +172,14 @@ export const timePlot = () => {
             .call((update) =>
               update
                 .transition(t)
-                .delay((d, i) => i * 10)
+                .delay((d) => 750)
                 .call(positionRects)
                 .call(growRects)
             ),
         (exit) => exit.call(shrinkRects)
       )
       .on('mouseover', mouseover)
-      .on('mousemove', mousemove)      
+      .on('mousemove', mousemove)
       .on('mouseleave', mouseleave);
 
     // Y Axis    

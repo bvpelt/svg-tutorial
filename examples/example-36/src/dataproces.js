@@ -10,6 +10,11 @@ function isValidDate(d) {
     return d instanceof Date && !isNaN(d);
 }
 
+function isEmptyDate(d) {
+    return isValidDate(d) && (d.getTime() === 0);
+}
+
+
 function addDate(d, numberdays) {
     let rtime = new Date(d);
 
@@ -26,9 +31,10 @@ function addDate(d, numberdays) {
 function fillColorXY(varMaxX, varMaxY, dataMaxX, dataMaxY) {
     var color = 'none';
 
-    const current = '#fcbbb2';
-    const borderactive = '#d3f5b5';
-    const inactive = '#b2f3fc'
+    const current = 'rgb(252,187,178)';
+    const borderactive = 'rgb(211,245,181)';
+    const inactive = 'rgb(179,243,252)';
+
 
     if (varMaxX.getTime() === dataMaxX.getTime()) {
         if (varMaxY.getTime() === dataMaxY.getTime()) {
@@ -53,7 +59,25 @@ function fillColor(eindRegistratie, eindGeldigheid, eindInwerking, maxRegistrati
     };
 }
 
-export function dataProcessing(data) {
+export function dataProcessing(tempdata) {
+
+    // Convert input table to data usable for timeplot
+    //
+
+    var data = [];
+    tempdata.forEach((d, i) => {
+        let timeLine = {};
+        timeLine.tijdstipRegistratie = new Date(d.tijdstipRegistratie + 'Z');
+        timeLine.eindRegistratie = (d.eindRegistratie === null) ? new Date(null) : new Date(d.eindRegistratie + 'Z');
+        timeLine.beginGeldigheid = new Date(d.beginGeldigheid);
+        timeLine.eindGeldigheid = (d.eindGeldigheid == null) ? new Date(null) : new Date(d.eindGeldigheid);
+        timeLine.beginInwerking = new Date(d.beginInwerking);
+        timeLine.eindInwerking = (d.eindInwerking === null) ? new Date(null) : new Date(d.eindInwerking);
+        timeLine.value = d.value;
+
+        data.push(timeLine);
+    });
+
 
     // determine maximum values for the graph
     // for not yet defined eindregistratie/eindgeldigheid use temporary maximum and add 7 days
@@ -61,21 +85,21 @@ export function dataProcessing(data) {
 
     // determine maximum values for registrie/geldigheid of dataset
     const tempxMax = max(data, (d) =>
-        isValidDate(d.eindRegistratie)
-            ? d.eindRegistratie
-            : d.tijdstipRegistratie
+        isEmptyDate(d.eindRegistratie)
+            ? d.tijdstipRegistratie
+            : d.eindRegistratie
     );
 
     const tempGeldigMax = max(data, (d) =>
-        isValidDate(d.eindGeldigheid)
-            ? d.eindGeldigheid
-            : d.beginGeldigheid
+        isEmptyDate(d.eindGeldigheid)
+            ? d.beginGeldigheid
+            : d.eindGeldigheid
     );
 
     const tempInWerkingMax = max(data, (d) =>
-        isValidDate(d.eindInwerking)
-            ? d.eindInwerking
-            : d.beginInwerking
+        isEmptyDate(d.eindInwerking)
+            ? d.beginInwerking
+            : d.eindInwerking
     );
 
     // determine maximum values for the graph
@@ -88,26 +112,22 @@ export function dataProcessing(data) {
     // create dataset with sentinel for not ended date elements
     // not ended means no eindGeldigheid, no eindInwerking or no eindRegistratie
     //
+
     const marks = data.map((d) => ({
         beginGeldigheid: d.beginGeldigheid,
-        eindGeldigheid: isValidDate(
-            d.eindGeldigheid
-        )
-            ? d.eindGeldigheid
-            : GeldigMax,
+        eindGeldigheid: isEmptyDate(d.eindGeldigheid)
+            ? GeldigMax
+            : d.eindGeldigheid,
 
         beginInwerking: d.beginInwerking,
-        eindInwerking: isValidDate(
+        eindInwerking: isEmptyDate(d.eindInwerking)
+            ? InwerkingMax :
             d.eindInwerking
-        )
-            ? d.eindInwerking
-            : InwerkingMax,
+        ,
         tijdstipRegistratie: d.tijdstipRegistratie,
-        eindRegistratie: isValidDate(
-            d.eindRegistratie
-        )
-            ? d.eindRegistratie
-            : xMax,
+        eindRegistratie: isEmptyDate(d.eindRegistratie)
+            ? xMax :
+            d.eindRegistratie,
         value: d.value,
     }));
 
@@ -128,8 +148,6 @@ export function dataProcessing(data) {
         maxInwerking: InwerkingMax,
         data: colorMarks,
     }
-
-    console.log(result);
 
     return result;
 };
